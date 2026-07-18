@@ -541,7 +541,8 @@ def obtener_tasa_bcv():
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
+    # Le quitamos el "request=request" y el "name=" para usar la sintaxis clásica
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/lotes/crear")
 def registrar_lote(lote_nuevo: ModeloLote, db: Session = Depends(obtener_db)):
