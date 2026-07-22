@@ -1,10 +1,16 @@
-// Este es un Service Worker básico. 
-// Su única función por ahora es cumplir el requisito de Chrome para permitir la instalación de la App.
+// Service Worker actualizado para forzar limpieza de caché y errores fantasma
 
 self.addEventListener('install', (e) => {
-    console.log('[Service Worker] Instalado');
+    self.skipWaiting(); // Fuerza a reemplazar el Service Worker viejo al instante
+    console.log('[Service Worker] Instalado y actualizado');
+});
+
+self.addEventListener('activate', (e) => {
+    e.waitUntil(clients.claim()); // Toma el control inmediato de la app en el celular
+    console.log('[Service Worker] Activado y en control');
 });
 
 self.addEventListener('fetch', (e) => {
-    // No interceptamos nada, dejamos que la red fluya normal
+    // Permite que el tráfico fluya normalmente hacia Render sin bloquear nada
+    e.respondWith(fetch(e.request));
 });
