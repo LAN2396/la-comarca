@@ -482,7 +482,10 @@ def historial_facturas(db: Session = Depends(obtener_db)):
             "descuento_tipo": f.descuento_tipo,
             "descuento_valor": f.descuento_valor,
             "total": f.total,
-            "saldo_pendiente": getattr(f, 'saldo_pendiente', 0.0), # ✅ EXPORTAMOS EL SALDO
+            "saldo_pendiente": getattr(f, 'saldo_pendiente', 0.0),
+            "moneda": getattr(f, 'moneda', 'USD'),
+            "tasa_cambio": getattr(f, 'tasa_cambio', 1.0),
+            "monto_ves": getattr(f, 'monto_ves', 0.0),
             "detalles": detalles_lista
         })
         
@@ -496,7 +499,16 @@ def abonar_factura(abono: ModeloAbono, db: Session = Depends(obtener_db)):
         raise HTTPException(status_code=400, detail="Monto inválido o excede la deuda actual.")
     
     factura.saldo_pendiente -= abono.monto
-    
+        
+    # 🔥 NUEVO: La factura ahora recuerda el método y la tasa con la que fue pagada
+    factura.tasa_cambio = abono.tasa_cambio
+    factura.moneda = "VES" if abono.metodo_pago in ["Transferencia Bancaria", "Pago Móvil", "Transferencia"] else "USD"
+        
+    # Si paga por partes, sumamos los bolívares al total de la factura
+    if factura.monto_ves is None:
+        factura.monto_ves = 0.0
+    factura.monto_ves += abono.monto_ves
+
     lote_seguro = db.query(models.LoteDB).first()
     lote_valido = lote_seguro.id if lote_seguro else None
 
@@ -542,7 +554,7 @@ def obtener_tasa_bcv():
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     # Le quitamos el "request=request" y el "name=" para usar la sintaxis clásica
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
 
 @app.post("/lotes/crear")
 def registrar_lote(lote_nuevo: ModeloLote, db: Session = Depends(obtener_db)):
