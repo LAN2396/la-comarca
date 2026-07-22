@@ -65,9 +65,18 @@ inicializar_usuarios_inteligente()
 
 # --- 2. LA RUTA EXACTA (Con el "datos: ModeloLogin") ---
 
-# ✅ ESTAS SON LAS DOS LÍNEAS QUE SE HABÍAN BORRADO
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# --- PUENTE INTELIGENTE PARA TEMPLATES (Compatible con PC y Render) ---
+def render_seguro(request: Request, name: str, context: dict = None):
+    if context is None:
+        context = {}
+    context["request"] = request
+    try:
+        return templates.TemplateResponse(request=request, name=name, context=context)
+    except TypeError:
+        return templates.TemplateResponse(name, context)
 
 # --- MODELOS DE ENTRADA (PYDANTIC) ---
 
@@ -553,8 +562,7 @@ def obtener_tasa_bcv():
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    # Le quitamos el "request=request" y el "name=" para usar la sintaxis clásica
-    return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
+    return render_seguro(request, "index.html")
 
 @app.post("/lotes/crear")
 def registrar_lote(lote_nuevo: ModeloLote, db: Session = Depends(obtener_db)):
