@@ -38,6 +38,22 @@
             z-index: -1;
         }
     </style>
+    <!-- Script Anti-Pestañeo de Sesión -->
+    <script>
+        let sesionRapida = localStorage.getItem("sesionLaComarca");
+        let tiempoRapido = localStorage.getItem("tiempoLogin");
+        
+        if (sesionRapida === "activa" && tiempoRapido) {
+            let tiempoPasado = Date.now() - parseInt(tiempoRapido);
+            
+            // Si no ha pasado 1 hora, inyectamos CSS para ocultar el login ANTES de que se dibuje
+            if (tiempoPasado < 3600000) {
+                let estilo = document.createElement('style');
+                estilo.innerHTML = '#pantalla-login { display: none !important; }';
+                document.head.appendChild(estilo);
+            }
+        }
+    </script>
 </head>
 
 <!-- Enlace al Manifest para volverlo App -->
@@ -135,6 +151,11 @@
             </button>
             <button onclick="cambiarPestana('panel-usuarios')" id="btn-panel-usuarios" class="pestana-btn hidden w-full text-left flex items-center gap-3 p-3 rounded-lg font-bold text-sm text-red-100 hover:bg-red-900/50 transition-all">
                 <span>🛡️</span> Gestión de Usuarios
+            </button>
+            <!-- Botón de Cerrar Sesión -->
+            <!-- Botón de Cerrar Sesión -->
+            <button onclick="cerrarSesionManual()" class="w-full text-left flex items-center gap-3 p-3 mt-6 rounded-lg font-bold text-sm text-red-100 hover:bg-red-900/50 transition-all border-t border-red-800/50">
+                <span>🚪</span> Cerrar Sesión
             </button>
         </nav>
         

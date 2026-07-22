@@ -45,7 +45,43 @@ function lanzarFallbackBCV(display) {
 // Hacemos que se cargue la tasa automáticamente ni bien la página cargue
 document.addEventListener("DOMContentLoaded", () => {
     extraerTasaBCV();
+    verificarSesionActiva(); // Verificamos si ya estaba logueado
 });
+
+// ---> NUEVA FUNCIÓN: Mantiene la sesión abierta si no ha pasado 1 hora
+function verificarSesionActiva() {
+    let sesion = localStorage.getItem("sesionLaComarca");
+    let tiempoLogin = localStorage.getItem("tiempoLogin");
+
+    if (sesion === "activa" && tiempoLogin) {
+        let tiempoActual = Date.now();
+        let tiempoPasado = tiempoActual - parseInt(tiempoLogin);
+        
+        // 3600000 milisegundos = 1 hora exacta
+        if (tiempoPasado < 3600000) {
+            // Restaurar variables globales desde la memoria
+            usuarioActual = localStorage.getItem("usuarioGuardado");
+            rolActual = localStorage.getItem("rolGuardado");
+            let permisos = localStorage.getItem("permisosGuardados");
+
+            // Ocultar login y encender los botones sin pedir clave
+            let pantallaLogin = document.getElementById('pantalla-login');
+            if(pantallaLogin) pantallaLogin.classList.add('hidden');
+            
+            aplicarPermisosVisuales(permisos, usuarioActual);
+            console.log("Sesión restaurada correctamente.");
+        } else {
+            // Si ya pasó la hora, limpiamos la memoria para exigir login
+            localStorage.clear();
+        }
+    }
+}
+
+// ---> NUEVA FUNCIÓN: Para el botón de "Cerrar Sesión" (Cuando lo agregues)
+function cerrarSesionManual() {
+    localStorage.clear();
+    location.reload(); // Recarga la página para devolverlo al login limpio
+}
 
 // 1. EL LOGIN: Ahora lee qué casillas tiene permitidas el usuario
 document.getElementById('formLogin').addEventListener('submit', async (e) => {
@@ -69,6 +105,14 @@ document.getElementById('formLogin').addEventListener('submit', async (e) => {
         if (r.ok) {
             usuarioActual = res.username;
             rolActual = res.rol;
+            
+            // ---> NUEVO: Guardar sesión y datos en el teléfono por 1 hora
+            localStorage.setItem("sesionLaComarca", "activa");
+            localStorage.setItem("tiempoLogin", Date.now().toString());
+            localStorage.setItem("usuarioGuardado", res.username);
+            localStorage.setItem("rolGuardado", res.rol);
+            localStorage.setItem("permisosGuardados", res.permisos);
+
             document.getElementById('pantalla-login').classList.add('hidden');
             
             // 🚀 Llamamos a la función mágica que enciende los botones
@@ -1753,11 +1797,25 @@ function renderizarTablaFacturas(facturas) {
 function reimprimirFactura(numFac) {
     let f = cacheFacturas.find(x => x.numero_factura === numFac);
     if(!f) return;
-    // ✅ Ahora le enviamos también la fecha_vencimiento a la impresora
-    imprimirTicketPOS(f.numero_factura, f.cliente, f.condicion, formMoneda(f.total), f.detalles, f.descuento_tipo, f.descuento_valor, f.fecha_vencimiento);
+    
+    // 💡 CAMBIO: Ahora le pasamos la moneda, los bolívares y el saldo a la impresora
+    imprimirTicketPOS(
+        f.numero_factura, 
+        f.cliente, 
+        f.condicion, 
+        f.total, 
+        f.detalles, 
+        f.descuento_tipo, 
+        f.descuento_valor, 
+        f.fecha_vencimiento, 
+        f.tasa_cambio, 
+        f.monto_ves, 
+        f.moneda, 
+        f.saldo_pendiente
+    );
 }
 
-function imprimirTicketPOS(numeroFactura, clienteNombre, condicion, totalFinalFormateado, items, descTipo, descValor, fechaVencimiento) {
+function imprimirTicketPOS(numeroFactura, clienteNombre, condicion, totalUsd, items, descTipo, descValor, fechaVencimiento, tasaCambio, montoBs, moneda, saldoPendiente) {
     items = items || [];
     let ventanilla = window.open('', '_blank', 'width=350,height=600');
     let fecha = new Date().toLocaleString('es-VE');
@@ -1780,10 +1838,31 @@ function imprimirTicketPOS(numeroFactura, clienteNombre, condicion, totalFinalFo
         textoDescuento = `<p style="text-align:right; margin: 4px 0;"><strong>Descuento:</strong> -${desc}</p>`;
     }
 
-    // ✅ LÓGICA DE VENCIMIENTO: Solo aparece si es a crédito
+    // 🔥 NUEVA LÓGICA: Determinar si ya pagó su deuda para borrar la fecha de vencimiento
+    let textoCondicion = condicion;
     let textoVencimiento = '';
-    if (condicion === 'Crédito' && fechaVencimiento) {
-        textoVencimiento = `<p><strong>Vence:</strong> ${fechaVencimiento}</p>`;
+    if (condicion === 'Crédito') {
+        if (saldoPendiente <= 0) {
+            textoCondicion = 'Crédito (PAGADO)';
+        } else if (fechaVencimiento) {
+            textoVencimiento = `<p><strong>Vence:</strong> ${fechaVencimiento}</p>`;
+        }
+    }
+
+    // 🔥 NUEVA LÓGICA: Forzar el dibujo de los Bolívares leyendo la base de datos
+    let bloqueTotalHTML = '';
+    if (moneda === 'VES') {
+        let tasa = tasaCambio || TASA_BCV_ACTUAL; 
+        let totalEnBs = montoBs > 0 ? montoBs : (parseFloat(totalUsd) * tasa);
+        
+        bloqueTotalHTML = `
+            <div class="total" style="font-size: 15px;">TOTAL: Bs ${totalEnBs.toFixed(2)}</div>
+            <div class="center" style="font-size: 11px; margin-top: 3px;">
+                (Eqv. a ${formMoneda(totalUsd)} - Tasa: ${tasa.toFixed(2)})
+            </div>
+        `;
+    } else {
+        bloqueTotalHTML = `<div class="total">TOTAL: ${formMoneda(totalUsd)}</div>`;
     }
 
     let html = `
@@ -1801,7 +1880,6 @@ function imprimirTicketPOS(numeroFactura, clienteNombre, condicion, totalFinalFo
             .total { font-size: 15px; font-weight: 900; text-align: right; margin-top: 10px; }
             .nofiscal { text-align: center; font-size: 14px; font-weight: 900; margin-bottom: 5px; letter-spacing: 1px;}
             
-            /* Formato de ticket térmico */
             @media print {
                 @page { margin: 0; size: 80mm auto; }
                 body { width: 80mm; margin: 0; padding: 5mm; }
@@ -1817,7 +1895,7 @@ function imprimirTicketPOS(numeroFactura, clienteNombre, condicion, totalFinalFo
         <p><strong>Factura:</strong> ${numeroFactura}</p>
         <p><strong>Fecha:</strong> ${fecha}</p>
         <p><strong>Cliente:</strong> ${clienteNombre}</p>
-        <p><strong>Condición:</strong> ${condicion}</p>
+        <p><strong>Condición:</strong> ${textoCondicion}</p>
         ${textoVencimiento}
         <div class="divider"></div>
         <table>
@@ -1834,14 +1912,17 @@ function imprimirTicketPOS(numeroFactura, clienteNombre, condicion, totalFinalFo
         </table>
         <div class="divider"></div>
         ${textoDescuento}
-        <div class="total">TOTAL: ${totalFinalFormateado}</div>
+        
+        ${bloqueTotalHTML}
+        
         <div class="divider"></div>
         <p class="center" style="font-size: 10px; margin-top: 15px;">*** GRACIAS POR SU COMPRA ***</p>
         
         <script>
             window.onload = function() { 
-                window.print(); 
-                setTimeout(() => { window.close(); }, 500);
+                setTimeout(() => { 
+                    window.print(); 
+                }, 500);
             }
         </script>
     </body>
@@ -1851,6 +1932,7 @@ function imprimirTicketPOS(numeroFactura, clienteNombre, condicion, totalFinalFo
     ventanilla.document.write(html);
     ventanilla.document.close();
 }
+
 // =========================================
 // MÓDULO DE COBRANZA
 // =========================================
@@ -1882,8 +1964,12 @@ async function procesarCobro(e) {
     let tasaParaBD = usaBolivares ? TASA_BCV_ACTUAL : 1.0;
     let vesParaBD = usaBolivares ? (montoCobradoUsd * TASA_BCV_ACTUAL) : 0.0;
 
+    // Capturamos los textos del cliente y la factura directamente de la ventanita
+    let facturaTxt = document.getElementById('cobro_factura').innerText;
+    let clienteTxt = document.getElementById('cobro_cliente').innerText;
+
     let datos = {
-        numero_factura: document.getElementById('cobro_factura').innerText,
+        numero_factura: facturaTxt,
         monto: montoCobradoUsd,
         metodo_pago: metodoSeleccionado,
         tasa_cambio: tasaParaBD, 
@@ -1897,11 +1983,20 @@ async function procesarCobro(e) {
             body: JSON.stringify(datos)
         });
         let res = await r.json();
+        
         if(r.ok) {
             mostrarRespuesta(res);
             cerrarModalCobro();
             cargarHistorialFacturas(); 
             actualizarBalance();       
+
+            // 🔥 IMPRESIÓN OPCIONAL: Pregunta antes de imprimir
+            setTimeout(() => {
+                if(confirm("✅ El dinero ingresó a la caja correctamente.\n\n¿Deseas imprimir el comprobante de este abono?")) {
+                    imprimirTicketCobro(facturaTxt, clienteTxt, montoCobradoUsd, metodoSeleccionado, tasaParaBD, vesParaBD);
+                }
+            }, 400); // Pausa breve para que no choque con la notificación verde
+
         } else {
             alert("⚠️ Error: " + res.detail);
         }
@@ -1913,6 +2008,94 @@ async function procesarCobro(e) {
             btnSubmit.innerText = "Procesar Ingreso a Caja";
         }
     }
+}
+
+function imprimirTicketCobro(numeroFactura, clienteNombre, montoUsd, metodo, tasa, montoBs) {
+    let ventanilla = window.open('', '_blank', 'width=350,height=600');
+    let fecha = new Date().toLocaleString('es-VE');
+
+    // 🔥 LÓGICA INTELIGENTE DE MONEDA PARA EL ABONO
+    let bloqueTotalHTML = '';
+    if (metodo === 'Efectivo' || metodo === 'Zelle') {
+        bloqueTotalHTML = `<div class="total">TOTAL: ${formMoneda(montoUsd)}</div>`;
+    } else {
+        bloqueTotalHTML = `
+            <div class="total" style="font-size: 15px;">TOTAL: Bs ${montoBs.toFixed(2)}</div>
+            <div class="center" style="font-size: 11px; margin-top: 3px;">
+                (Eqv. a ${formMoneda(montoUsd)} - Tasa: ${tasa.toFixed(2)})
+            </div>
+        `;
+    }
+
+    // Usamos EXACTAMENTE la misma estructura HTML, CSS y de Tablas de la factura original
+    let html = `
+    <html>
+    <head>
+        <title>Recibo Abono ${numeroFactura}</title>
+        <style>
+            body { font-family: 'Courier New', Courier, monospace; font-size: 12px; margin: 0 auto; padding: 10px; width: 80mm; color: #000; }
+            h2 { text-align: center; margin: 5px 0; font-size: 16px; font-weight: 900; text-transform: uppercase; }
+            p { margin: 3px 0; }
+            .center { text-align: center; }
+            .divider { border-bottom: 1px dashed #000; margin: 10px 0; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+            th { border-bottom: 1px dashed #000; padding-bottom: 5px; text-align: left; }
+            .total { font-size: 15px; font-weight: 900; text-align: right; margin-top: 10px; }
+            .nofiscal { text-align: center; font-size: 14px; font-weight: 900; margin-bottom: 5px; letter-spacing: 1px;}
+            
+            @media print {
+                @page { margin: 0; size: 80mm auto; }
+                body { width: 80mm; margin: 0; padding: 5mm; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="nofiscal">*** NO FISCAL ***</div>
+        <h2>Granja La Comarca</h2>
+        <p class="center">Gestión Avícola</p>
+        <p class="center">El Vigía, Edo. Mérida</p>
+        <div class="divider"></div>
+        <p><strong>Factura:</strong> ${numeroFactura}</p>
+        <p><strong>Fecha:</strong> ${fecha}</p>
+        <p><strong>Cliente:</strong> ${clienteNombre}</p>
+        <p><strong>Condición:</strong> Abono a Deuda</p>
+        <div class="divider"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Concepto</th>
+                    <th style="text-align:center">Método</th>
+                    <th style="text-align:right">SubT</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 4px 0;">Pago parcial</td>
+                    <td style="text-align:center; padding: 4px 0;">${metodo}</td>
+                    <td style="text-align:right; padding: 4px 0;">${formMoneda(montoUsd)}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="divider"></div>
+        
+        ${bloqueTotalHTML}
+        
+        <div class="divider"></div>
+        <p class="center" style="font-size: 10px; margin-top: 15px;">*** TRANSACCIÓN APROBADA ***</p>
+        
+        <script>
+            window.onload = function() { 
+                setTimeout(() => { 
+                    window.print(); 
+                }, 500);
+            }
+        </script>
+    </body>
+    </html>
+    `;
+    
+    ventanilla.document.write(html);
+    ventanilla.document.close();
 }
 
 // =========================================

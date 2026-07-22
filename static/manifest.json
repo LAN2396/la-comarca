@@ -3,6 +3,7 @@
   "short_name": "La Comarca",
   "description": "Sistema de gestión avícola para La Comarca",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#8B0000",
   "theme_color": "#8B0000",
