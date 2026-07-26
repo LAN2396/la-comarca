@@ -864,13 +864,28 @@ def obtener_dashboard_finanzas(tasa_actual: float = 1.0, db: Session = Depends(o
 def registrar_consumo(consumo: ModeloConsumoAlimento, db: Session = Depends(obtener_db)):
     lote = db.query(models.LoteDB).filter(models.LoteDB.id == consumo.lote_id).first()
     if not lote: raise HTTPException(status_code=404, detail="Lote no existe.")
+    
     calculo_gramos = (consumo.kilos_consumidos * 1000) / lote.cantidad_actual if lote.cantidad_actual > 0 else 0
-    db_consumo = models.ConsumoAlimentoDB(lote_id=consumo.lote_id, kilos_consumidos=consumo.kilos_consumidos, gramos_por_ave=round(calculo_gramos,2), fecha=consumo.fecha)
+    
+    db_consumo = models.ConsumoAlimentoDB(
+        lote_id=consumo.lote_id, 
+        kilos_consumidos=consumo.kilos_consumidos, 
+        gramos_por_ave=round(calculo_gramos,2), 
+        fecha=consumo.fecha
+    )
     db.add(db_consumo)
+    
+    # NUEVO: Descontar los kilos del inventario de Alimento en Almacén
+    insumo_alimento = db.query(models.InsumoDB).filter(models.InsumoDB.categoria == "Alimento").first()
+    if insumo_alimento:
+        insumo_alimento.stock_actual -= consumo.kilos_consumidos
+        # Evitamos números negativos
+        if insumo_alimento.stock_actual < 0:
+            insumo_alimento.stock_actual = 0
+            
     db.commit()
-    return {"mensaje": "¡Consumo registrado!", "gramos_por_ave": f"{round(calculo_gramos,2)}g"}
+    return {"mensaje": "¡Consumo registrado y descontado del almacén!", "gramos_por_ave": f"{round(calculo_gramos,2)}g"}
 
-# --- RUTA NUEVA PARA EL HISTORIAL EXCEL ---
 # --- RUTA NUEVA PARA EL HISTORIAL EXCEL ---
 @app.get("/historial/{dias}")
 def obtener_historial(dias: int, db: Session = Depends(obtener_db)):
@@ -883,13 +898,17 @@ def obtener_historial(dias: int, db: Session = Depends(obtener_db)):
         producciones = db.query(models.ProduccionDB).filter(models.ProduccionDB.fecha >= fecha_limite).all()
         alimentos = db.query(models.ConsumoAlimentoDB).filter(models.ConsumoAlimentoDB.fecha >= fecha_limite).all()
     
+    # NUEVO: Cargamos los lotes para mapear el ID con su Nombre real
+    lotes_db = db.query(models.LoteDB).all()
+    lotes_cache = {l.id: f"{l.nombre} ({l.galpon})" for l in lotes_db}
+    
     historial_dict = {}
     
     for p in producciones:
         key = f"{p.fecha}_{p.lote_id}"
         historial_dict[key] = {
             "fecha": p.fecha.strftime("%Y-%m-%d"),
-            "lote_id": p.lote_id,
+            "lote_nombre": lotes_cache.get(p.lote_id, f"Lote {p.lote_id}"), # Aquí enviamos el nombre
             "huevos": p.cantidad_huevos,
             "mortalidad": p.mortalidad,
             "alimento": 0.0
@@ -902,7 +921,7 @@ def obtener_historial(dias: int, db: Session = Depends(obtener_db)):
         else:
             historial_dict[key] = {
                 "fecha": a.fecha.strftime("%Y-%m-%d"),
-                "lote_id": a.lote_id,
+                "lote_nombre": lotes_cache.get(a.lote_id, f"Lote {a.lote_id}"), # Aquí enviamos el nombre
                 "huevos": 0,
                 "mortalidad": 0,
                 "alimento": a.kilos_consumidos
@@ -1005,18 +1024,28 @@ def eliminar_producto(prod_id: int, db: Session = Depends(obtener_db)):
     return {"mensaje": "¡Producto eliminado del catálogo!"}
 
 # --- RUTA PARA EL CENTRO DE CLASIFICACIÓN (SUMA AL INVENTARIO) ---
+# --- RUTA PARA EL CENTRO DE CLASIFICACIÓN (SUMA AL INVENTARIO Y RESTA EMPAQUE) ---
 @app.post("/empaque/registrar")
 def registrar_empaque(datos: ModeloEmpaque, db: Session = Depends(obtener_db)):
-    # Sumamos los cartones empacados al inventario de cada producto
+    total_cartones_empacados = 0
+    
+    # Sumamos los cartones empacados al inventario de cada producto (Huevos)
     for item in datos.items:
         producto = db.query(models.ProductoDB).filter(models.ProductoDB.id == item.producto_id).first()
         if producto:
             producto.stock_cartones += item.cantidad_cartones
-    
-    # (En la Fase 2 agregaremos la tabla de Historial Kardex y los descartes aquí)
+            total_cartones_empacados += item.cantidad_cartones
+            
+    # NUEVO: Descontar los separadores/cartones del almacén de insumos
+    insumo_empaque = db.query(models.InsumoDB).filter(models.InsumoDB.categoria == "Empaque").first()
+    if insumo_empaque:
+        insumo_empaque.stock_actual -= total_cartones_empacados
+        # Evitamos que el inventario quede en números negativos por error
+        if insumo_empaque.stock_actual < 0:
+            insumo_empaque.stock_actual = 0
     
     db.commit()
-    return {"mensaje": "¡Empaque registrado! El inventario sumó los cartones automáticamente."}
+    return {"mensaje": "¡Empaque registrado! Se sumaron los cartones y se descontaron los separadores del almacén."}
 
 # --- RUTAS DE ALMACÉN (INSUMOS Y COMPRAS) ---
 @app.get("/almacen/insumos")
