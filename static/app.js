@@ -3,6 +3,7 @@
 // =========================================
 let usuarioActual = null;
 let rolActual = null;
+let ultimoLoteTrabajado = null;
 
 // Variable global para usar la tasa en todo el sistema (facturas, pagos, etc.)
 let TASA_BCV_ACTUAL = 0.0;
@@ -367,6 +368,17 @@ document.getElementById('btnGuardarPermisos').addEventListener('click', async ()
             if (panelId === 'panel-usuarios') {
                 cargarUsuarios();
             }
+            
+            if (panelId === 'panel-graficos') {
+                let selectGraf = document.getElementById('select_grafico_lote');
+                if (ultimoLoteTrabajado) {
+                    selectGraf.value = ultimoLoteTrabajado; // Carga el último trabajado
+                } else if (selectGraf.options.length > 1) {
+                    selectGraf.selectedIndex = 1; // Carga el primero disponible si no hay uno previo
+                }
+                dibujarGraficos(selectGraf.value);
+            }
+            
         }
 
         // =========================================
@@ -901,6 +913,10 @@ document.getElementById('btnGuardarPermisos').addEventListener('click', async ()
                     document.getElementById('lote_id_alim').innerHTML = opcionesHTML;
                     document.getElementById('select_grafico_lote').innerHTML = opcionesHTML;
                     
+                    // NUEVO: Agregamos la lista a los correctores
+                    document.getElementById('corr_prod_lote').innerHTML = opcionesHTML;
+                    document.getElementById('corr_alim_lote').innerHTML = opcionesHTML;
+                    
                     let buscador = document.getElementById('buscador_lote');
                     buscador.innerHTML = opcionesHTML;
                     if(lotes.length > 0) {
@@ -977,6 +993,7 @@ document.getElementById('btnGuardarPermisos').addEventListener('click', async ()
         /* --- FORMULARIOS OPERATIVOS --- */
         document.getElementById('formReporte').addEventListener('submit', async (e) => {
             e.preventDefault();
+            ultimoLoteTrabajado = document.getElementById('lote_id_prod').value;
             let datos = {
                 lote_id: parseInt(document.getElementById('lote_id_prod').value),
                 cantidad_huevos: parseInt(document.getElementById('cantidad_huevos').value),
@@ -990,6 +1007,7 @@ document.getElementById('btnGuardarPermisos').addEventListener('click', async ()
 
         document.getElementById('formAlimento').addEventListener('submit', async (e) => {
             e.preventDefault();
+            ultimoLoteTrabajado = document.getElementById('lote_id_alim').value;
             let datos = {
                 lote_id: parseInt(document.getElementById('lote_id_alim').value),
                 kilos_consumidos: parseFloat(document.getElementById('kilos_consumidos').value),
@@ -1050,9 +1068,10 @@ document.getElementById('btnGuardarPermisos').addEventListener('click', async ()
                         totalMortalidad += reg.mortalidad;
                         totalAlimento += reg.alimento;
                         
+                        // AQUI CAMBIA: Usamos reg.lote_nombre en vez de reg.lote_id
                         html += `<tr class="${bg} hover:bg-green-50/40 transition-colors">
                             <td class="px-6 py-3 font-medium text-gray-900">${fechaFormateada}</td>
-                            <td class="px-6 py-3 text-gray-600 font-bold">Lote ${reg.lote_id}</td>
+                            <td class="px-6 py-3 text-gray-800 font-bold">${reg.lote_nombre}</td> 
                             <td class="px-6 py-3 text-right font-mono text-gray-700">${reg.huevos.toLocaleString('en-US')}</td>
                             <td class="px-6 py-3 text-right font-mono text-red-600">${reg.mortalidad}</td>
                             <td class="px-6 py-3 text-right font-mono text-gray-700">${reg.alimento.toFixed(2)}</td>
@@ -1750,22 +1769,21 @@ function renderizarTablaFacturas(facturas) {
     let totalCredito = 0;
 
     if (facturas.length === 0) {
-        html = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400 italic font-medium">No se encontraron facturas con los filtros seleccionados.</td></tr>`;
+        html = `<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400 italic font-medium">No se encontraron facturas con los filtros seleccionados.</td></tr>`;
     } else {
         facturas.forEach((f, i) => {
             let saldo = f.saldo_pendiente || 0;
-            
-            // 💰 Cálculos matemáticos en vivo
             totalFacturado += f.total;
             totalCredito += saldo;
-            totalCobrado += (f.total - saldo); // Solo lo que ya se pagó
+            totalCobrado += (f.total - saldo);
 
-            // 🎨 Estilos visuales inteligentes
             let bg = i % 2 === 0 ? 'bg-gray-50/50' : 'bg-white';
             let colorCondicion = saldo > 0 ? 'text-red-700 bg-red-100 border-red-200' : 'text-emerald-700 bg-emerald-100 border-emerald-200';
-            let textoCondicion = saldo > 0 ? f.condicion : 'Pagado';
             
-            // Botones interactivos
+            // NUEVA LÓGICA DE ESTADO VS MÉTODO
+            let textoEstado = saldo > 0 ? 'Deuda' : 'Pagado'; 
+            let metodoPago = f.condicion; 
+            
             let botonCobrar = saldo > 0 
                 ? `<button onclick="abrirModalCobro('${f.numero_factura}', ${saldo}, '${f.cliente}')" class="bg-emerald-600 text-white hover:bg-emerald-700 px-2.5 py-1.5 rounded shadow-sm text-xs font-bold transition">💳 Cobrar</button>` 
                 : `<span class="px-2 py-1 text-xs text-gray-400 font-bold italic">Sin deuda</span>`;
@@ -1775,8 +1793,9 @@ function renderizarTablaFacturas(facturas) {
                 <td class="px-3 py-3 font-mono font-black text-gray-800">${f.numero_factura}</td>
                 <td class="px-3 py-3 font-bold text-gray-900">${f.cliente}</td>
                 <td class="px-3 py-3 text-center">
-                    <span class="px-2 py-1 rounded font-bold text-[11px] border ${colorCondicion}">${textoCondicion}</span>
+                    <span class="px-2 py-1 rounded font-bold text-[11px] border ${colorCondicion}">${textoEstado}</span>
                 </td>
+                <td class="px-3 py-3 text-center text-xs font-bold text-gray-600">${metodoPago}</td>
                 <td class="px-3 py-3 text-right font-mono font-bold text-gray-600 text-sm">${formMoneda(f.total)}</td>
                 <td class="px-3 py-3 text-right font-mono font-black ${saldo > 0 ? 'text-red-600' : 'text-emerald-600'} text-base">${formMoneda(saldo)}</td>
                 <td class="px-3 py-3 text-center whitespace-nowrap flex justify-center items-center gap-1">
@@ -1787,7 +1806,6 @@ function renderizarTablaFacturas(facturas) {
         });
     }
 
-    // Dibujamos la tabla y estampamos los totales en las tarjetas
     document.getElementById('tabla-historial-facturas').innerHTML = html;
     document.getElementById('lbl_fact_total').innerText = formMoneda(totalFacturado);
     document.getElementById('lbl_fact_cobrado').innerText = formMoneda(totalCobrado);
