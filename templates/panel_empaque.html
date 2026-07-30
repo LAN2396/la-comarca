@@ -1,0 +1,27 @@
+<div id="panel-empaque" class="panel-seccion hidden max-w-3xl mx-auto">
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-orange-500 mb-6">
+        <h2 class="text-lg font-black text-orange-600 mb-4 flex items-center gap-2">🥚 Centro de Clasificación y Empaque</h2>
+        <p class="text-sm text-gray-500 mb-6">Convierte la producción bruta del galpón en cartones listos para la venta. Lo que ingreses aquí se sumará automáticamente a tu stock de ventas.</p>
+        
+        <form id="formEmpaque" class="space-y-6">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 ml-1 mb-1">FECHA DE CLASIFICACIÓN</label>
+                <input type="date" id="fecha_empaque" class="w-full md:w-1/2 p-2.5 bg-gray-50 border border-gray-300 rounded font-bold" required>
+            </div>
+
+            <div class="bg-orange-50 p-4 rounded-lg border border-orange-200 shadow-inner">
+                <h3 class="text-sm font-bold text-orange-800 mb-3">Cartones Empacados (Ingresa la cantidad)</h3>
+                <div id="contenedor-productos-empaque" class="space-y-3">
+                    <p class="text-xs text-gray-500 italic">Cargando tipos de huevos...</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <label class="block text-xs font-bold text-gray-700 ml-1 mb-1">HUEVOS DESCARTADOS (Rotos, sucios, fárfara)</label>
+                <input type="number" min="0" id="huevos_descarte" value="0" class="w-full md:w-1/2 p-2.5 bg-white border border-gray-300 rounded font-bold text-red-600">
+            </div>
+
+            <button type="submit" class="w-full bg-orange-600 text-white font-bold p-3 rounded hover:bg-orange-700 shadow transition">Procesar Empaque y Sumar al Inventario</button>
+        </form>
+    </div>
+</div>

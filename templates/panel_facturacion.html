@@ -1,0 +1,115 @@
+<div id="panel-facturacion" class="panel-seccion hidden space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-purple-600">
+                <h3 class="text-xs font-black text-gray-800 mb-3 uppercase tracking-wider">👤 Datos del Cliente</h3>
+                <div class="space-y-3">
+                    <select id="fact_cliente_id" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded font-bold text-sm outline-none">
+                        <option value="" disabled selected>Cargando clientes...</option>
+                    </select>
+                    <div class="text-right">
+                        <button type="button" onclick="document.getElementById('form-rapido-cliente').classList.toggle('hidden')" class="text-xs font-bold text-blue-600 hover:underline">+ Registro Rápido Cliente</button>
+                    </div>
+                </div>
+                
+                <div id="form-rapido-cliente" class="hidden mt-3 pt-3 border-t border-gray-100 space-y-3 text-xs">
+                    <input type="text" id="c_doc" placeholder="Cédula o RIF (Ej: V-12345678-0)" class="w-full p-2 bg-gray-50 border border-gray-300 rounded font-mono font-bold uppercase">
+                    <input type="text" id="c_nombre" placeholder="Nombre completo o Razón Social" class="w-full p-2 bg-gray-50 border border-gray-300 rounded font-bold">
+                    <input type="text" id="c_tlf" placeholder="Teléfono de contacto (Opcional)" class="w-full p-2 bg-gray-50 border border-gray-300 rounded">
+                    <button type="button" onclick="registrarClienteRapidoPOS()" class="w-full bg-purple-600 text-white font-bold p-2 rounded hover:bg-purple-700 shadow transition-colors">Guardar y Seleccionar</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-emerald-500">
+                <h3 class="text-xs font-black text-gray-800 mb-3 uppercase tracking-wider">🥚 Añadir al Carrito</h3>
+                <div class="space-y-4 text-xs">
+                    <div>
+                        <label class="block font-bold text-gray-500 mb-1 uppercase tracking-wider">Elegir Producto</label>
+                        <select id="fact_producto_id" onchange="actualizarPrecioSugeridoPOS()" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded font-bold text-sm outline-none">
+                            <option value="" disabled selected>Cargando catálogo...</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-gray-500 mb-1 uppercase tracking-wider">Cant. Cartones</label>
+                            <input type="number" min="0" id="fact_cant_cartones" value="0" oninput="actualizarPrecioSugeridoPOS()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded font-bold font-mono text-center text-sm text-emerald-700">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-500 mb-1 uppercase tracking-wider">Cant. Cajas (12 Ctns)</label>
+                            <input type="number" min="0" id="fact_cant_cajas" value="0" oninput="actualizarPrecioSugeridoPOS()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded font-bold font-mono text-center text-sm text-blue-600">
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="agregarAlCarritoPOS()" class="w-full bg-emerald-600 text-white font-bold p-3 rounded hover:bg-emerald-700 shadow text-sm transition-colors">Cargar al Carrito</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between min-h-[450px]">
+            <div>
+                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <h2 class="text-base font-black text-gray-800">🛒 Items a Facturar</h2>
+                    <span id="pos-fecha" class="text-xs font-mono font-black bg-gray-100 border border-gray-200 px-3 py-1 rounded text-gray-600"></span>
+                </div>
+                
+                <div class="overflow-x-auto border border-gray-200 rounded-lg max-h-72 overflow-y-auto shadow-inner">
+                    <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+                        <thead class="bg-gray-50 sticky top-0 shadow-sm z-10 font-bold text-gray-700">
+                            <tr>
+                                <th class="px-4 py-3">Producto</th>
+                                <th class="px-4 py-3 text-right">Cantidad</th>
+                                <th class="px-4 py-3 text-right">Precio Unit.</th>
+                                <th class="px-4 py-3 text-right">Subtotal</th>
+                                <th class="px-4 py-3 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-carrito-body" class="divide-y divide-gray-200 bg-white">
+                            <tr>
+                                <td colspan="5" class="px-4 py-10 text-center text-gray-400 italic font-medium">El carrito de ventas está totalmente vacío.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-3 mt-4 space-y-3">
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200 shadow-inner">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-500 mb-1 uppercase tracking-wider">💳 Método de Pago</label>
+                        <select id="fact_condicion" onchange="alternarDiasCreditoPOS(); actualizarTotalBCV();" class="w-full p-1.5 bg-white border border-gray-300 rounded font-bold text-gray-700 outline-none">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia Bancaria</option>
+                            <option value="Pago Móvil">Pago Móvil</option>
+                            <option value="Crédito">Venta a Crédito</option>
+                        </select>
+                    </div>
+                    <div id="contenedor_dias_credito" class="hidden">
+                        <label class="block text-[10px] font-black text-red-600 mb-1 uppercase tracking-wider">⏳ Días de Crédito</label>
+                        <input type="number" min="1" id="fact_dias_credito" value="15" class="w-full p-1.5 bg-white border border-red-300 rounded font-bold font-mono text-center text-xs text-red-700">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-purple-600 mb-1 uppercase tracking-wider">🏷️ Descuento</label>
+                        <div class="flex">
+                            <select id="fact_desc_tipo" onchange="actualizarTablaCarritoPOS()" class="p-1.5 bg-gray-100 border border-gray-300 border-r-0 rounded-l font-bold text-xs text-purple-700 outline-none cursor-pointer">
+                                <option value="%">%</option>
+                                <option value="$">$</option>
+                            </select>
+                            <input type="number" min="0" step="0.5" id="fact_descuento" value="0" oninput="actualizarTablaCarritoPOS()" class="w-full p-1.5 bg-white border border-gray-300 rounded-r font-bold font-mono text-center text-xs text-purple-700">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center px-2 pt-1">
+                    <span class="text-xs font-black text-gray-500 uppercase tracking-wider">Monto Total Liquidado:</span>
+                    <div class="text-right">
+                        <span id="fact_total_lbl" class="text-3xl font-black text-gray-900 font-mono block">$0.00</span>
+                        <span id="fact_total_bs_lbl" class="text-base font-black text-blue-700 font-mono hidden">Bs 0.00</span>
+                    </div>
+                </div>
+                <button type="button" onclick="procesarFacturaFinalPOS()" class="w-full bg-gray-800 text-white font-black p-3 rounded-lg hover:bg-black text-sm shadow-md transition-all uppercase tracking-wide">🧾 Registrar Venta</button>
+            </div>
+        </div>
+    </div>
+</div>

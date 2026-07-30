@@ -1,0 +1,21 @@
+<div id="panel-graficos" class="panel-seccion hidden">
+    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b pb-4">
+            <div>
+                <h2 class="text-xl font-black text-gray-800">Rendimiento y Consumo</h2>
+                <p class="text-sm text-gray-500">Curvas de postura vs. ingesta de alimento</p>
+            </div>
+            <div>
+                <select id="select_grafico_lote" onchange="dibujarGraficos(this.value)" class="p-2 border-2 border-comarca-rojo rounded-lg font-bold text-gray-700 bg-red-50 outline-none"></select>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 shadow-inner">
+                <canvas id="chartPostura"></canvas>
+            </div>
+            <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 shadow-inner">
+                <canvas id="chartAlimento"></canvas>
+            </div>
+        </div>
+    </div>
+</div>

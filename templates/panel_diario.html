@@ -1,0 +1,22 @@
+<div id="panel-diario" class="panel-seccion hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <h2 class="text-base font-bold text-comarca-rojo mb-4 flex items-center gap-2">📝 Producción y Bajas</h2>
+        <form id="formReporte" class="space-y-4">
+            <select id="lote_id_prod" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded text-gray-700 font-bold" required></select>
+            <input type="number" min="0" id="cantidad_huevos" placeholder="Huevos Recolectados" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
+            <input type="number" min="0" id="mortalidad" placeholder="Mortalidad (Ej: 0)" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
+            <input type="date" id="fecha_prod" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
+            <button type="submit" class="w-full bg-comarca-rojo text-white font-bold p-3 rounded hover:bg-red-900">Guardar Producción</button>
+        </form>
+    </div>
+    
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <h2 class="text-base font-bold text-yellow-600 mb-4 flex items-center gap-2">🌾 Consumo de Alimento</h2>
+        <form id="formAlimento" class="space-y-4">
+            <select id="lote_id_alim" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded text-gray-700 font-bold" required></select>
+            <input type="number" step="0.01" min="0" id="kilos_consumidos" placeholder="Kilos Consumidos" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
+            <input type="date" id="fecha_alim" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
+            <button type="submit" class="w-full bg-comarca-dorado text-black font-bold p-3 rounded hover:bg-yellow-600">Registrar Consumo</button>
+        </form>
+    </div>
+</div>
