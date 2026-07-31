@@ -69,34 +69,80 @@ def home(request: Request):
 
 
 
-@app.get("/reparar-sistema")
-def reparar_sistema_base_datos():
-    mensajes = []
+@app.get("/forzar-cuadre")
+def forzar_cuadre_caja():
+    # 👇 TUS NÚMEROS REALES Y EXACTOS 👇
+    TASA_ACTUAL = 746.63
+    OBJETIVO_BANCO_USD = -24.50
+    OBJETIVO_BANCO_BS = OBJETIVO_BANCO_USD * TASA_ACTUAL
     
-    # Abrimos la conexión manualmente usando el 'engine'
+    # Abrimos la conexión manualmente
     with Session(engine) as db:
+        # 1. Leer saldos actuales
+        res = db.execute(text("SELECT tipo, moneda, monto, monto_ves FROM transacciones")).fetchall()
+        caja_sistema = 0.0
+        banco_sistema_bs = 0.0
         
-        # 1. Agregar la columna al almacén SIN borrar los insumos existentes
-        try:
-            db.execute(text("ALTER TABLE insumos ADD COLUMN ultimo_precio FLOAT DEFAULT 0.0;"))
-            db.commit()
-            mensajes.append("✅ Columna 'ultimo_precio' añadida correctamente.")
-        except Exception as e:
-            db.rollback()
-            mensajes.append("⚠️ La columna 'ultimo_precio' ya estaba lista o hubo un error.")
-
-        # 2. Corregir el dinero mal ubicado (Mover Pago Móvil a Bancos)
-        try:
-            db.execute(text("""
-                UPDATE transacciones 
-                SET moneda = 'VES' 
-                WHERE tipo = 'Ingreso' 
-                AND (concepto ILIKE '%pago m_vil%' OR concepto ILIKE '%transferencia%');
-            """))
-            db.commit()
-            mensajes.append("✅ Dinero reubicado: Los pagos móviles antiguos fueron pasados a la cuenta de Bancos.")
-        except Exception as e:
-            db.rollback()
-            mensajes.append(f"❌ Error al reubicar el dinero: {str(e)}")
+        for fila in res:
+            tipo, moneda = fila[0], fila[1]
+            monto, monto_ves = float(fila[2] or 0), float(fila[3] or 0)
             
-    return {"estado": "Mantenimiento Completado", "resultados": mensajes}
+            if moneda == "VES":
+                if tipo == "Ingreso": banco_sistema_bs += monto_ves
+                else: banco_sistema_bs -= monto_ves
+            else:
+                if tipo == "Ingreso": caja_sistema += monto
+                else: caja_sistema -= monto
+                
+        from datetime import date
+        hoy = date.today().strftime("%Y-%m-%d")
+        
+        # 2. Vaciar el Efectivo (Simulando un depósito al banco)
+        if caja_sistema > 0.01:
+            # Sacamos del efectivo
+            db.execute(text("""
+                INSERT INTO transacciones (fecha, tipo, concepto, monto, categoria, moneda, tasa_cambio, monto_ves)
+                VALUES (:f, 'Egreso', 'Depósito en Banco (Cierre de Efectivo)', :m, 'Transferencia', 'USD', 1.0, 0.0)
+            """), {"f": hoy, "m": round(caja_sistema, 2)})
+            
+            # Lo metemos al banco
+            ingreso_banco_bs = caja_sistema * TASA_ACTUAL
+            db.execute(text("""
+                INSERT INTO transacciones (fecha, tipo, concepto, monto, categoria, moneda, tasa_cambio, monto_ves)
+                VALUES (:f, 'Ingreso', 'Recepción de Efectivo en Banco', :m, 'Transferencia', 'VES', :tc, :mves)
+            """), {"f": hoy, "m": round(caja_sistema, 2), "tc": TASA_ACTUAL, "mves": round(ingreso_banco_bs, 2)})
+            
+            banco_sistema_bs += ingreso_banco_bs
+            
+        # 3. Calcular y registrar la Pérdida Cambiaria exacta
+        diferencia_bs = OBJETIVO_BANCO_BS - banco_sistema_bs
+        
+        # Si la diferencia es negativa, significa que la devaluación nos comió dinero
+        if diferencia_bs < -0.01:
+            perdida_bs = abs(diferencia_bs)
+            perdida_usd = perdida_bs / TASA_ACTUAL
+            db.execute(text("""
+                INSERT INTO transacciones (fecha, tipo, concepto, monto, categoria, moneda, tasa_cambio, monto_ves)
+                VALUES (:f, 'Egreso', 'Pérdida por Diferencial Cambiario', :m, 'Pérdida Cambiaria', 'VES', :tc, :mves)
+            """), {"f": hoy, "m": round(perdida_usd, 2), "tc": TASA_ACTUAL, "mves": round(perdida_bs, 2)})
+            
+        # Por si acaso la tasa jugó a favor (Ganancia Cambiaria)
+        elif diferencia_bs > 0.01:
+            ganancia_bs = diferencia_bs
+            ganancia_usd = ganancia_bs / TASA_ACTUAL
+            db.execute(text("""
+                INSERT INTO transacciones (fecha, tipo, concepto, monto, categoria, moneda, tasa_cambio, monto_ves)
+                VALUES (:f, 'Ingreso', 'Ganancia por Diferencial Cambiario', :m, 'Ganancia Cambiaria', 'VES', :tc, :mves)
+            """), {"f": hoy, "m": round(ganancia_usd, 2), "tc": TASA_ACTUAL, "mves": round(ganancia_bs, 2)})
+            
+        db.commit()
+        
+    # Calculamos la pérdida para mostrarla en el mensaje final
+    perdida_final = round(abs(diferencia_bs) / TASA_ACTUAL, 2)
+        
+    return {
+        "mensaje": "¡Caja cuadrada y devaluación registrada como todo un profesional!",
+        "Efectivo_Final": "$0.00",
+        "Banco_Final": f"Bs {round(OBJETIVO_BANCO_BS, 2)}",
+        "Perdida_Cambiaria_Registrada": f"${perdida_final}"
+    }
