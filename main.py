@@ -4,6 +4,11 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.requests import Request
 
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+
+
 import models
 from database import engine
 
@@ -62,7 +67,7 @@ def home(request: Request):
 
 
 
-from sqlalchemy import text
+
 
 @app.get("/reparar-sistema")
 def reparar_sistema_base_datos(db: Session = Depends(get_db)):
