@@ -51,14 +51,22 @@ function filtrarFinanzas() {
 
     let transFiltradas = cacheFinanzas.filter(t => {
         if (tipoFecha === "Todas") return true;
-        let partes = t.fecha_raw.split('-'); 
-        let tObj = new Date(partes[0], partes[1] - 1, partes[2]);
+        
+        // 🛡️ BLINDAJE: Si el registro viejo no tiene fecha_raw, usamos la normal
+        let strF = t.fecha_raw || t.fecha || "";
+        if (!strF) return true;
+        
+        let partes = strF.includes('-') ? strF.split('-') : strF.split('/');
+        // Detectar automáticamente si viene como YYYY-MM-DD o DD/MM/YYYY
+        let tObj = partes[0].length === 4 
+            ? new Date(partes[0], partes[1] - 1, partes[2]) 
+            : new Date(partes[2], partes[1] - 1, partes[0]);
 
         if (tipoFecha === "Hoy") return tObj.getTime() === hoyObj.getTime();
         if (tipoFecha === "Semana") {
-            let semanaAtras = new Date(hoyObj);
-            semanaAtras.setDate(semanaAtras.getDate() - 7);
-            return tObj >= semanaAtras && tObj <= hoyObj;
+            let sAtras = new Date(hoyObj);
+            sAtras.setDate(sAtras.getDate() - 7);
+            return tObj >= sAtras && tObj <= hoyObj;
         }
         if (tipoFecha === "Mes") return tObj.getMonth() === hoyObj.getMonth() && tObj.getFullYear() === hoyObj.getFullYear();
         if (tipoFecha === "Personalizado" && strDesde && strHasta) {
@@ -76,7 +84,6 @@ function filtrarFinanzas() {
     if (transFiltradas.length === 0) {
         htmlTabla = `<div class="p-8 text-center text-gray-400 italic font-bold text-sm">No hay movimientos en este periodo.</div>`;
     } else {
-        // ENCABEZADOS PC
         htmlTabla += `
         <div class="hidden lg:grid lg:grid-cols-6 bg-gray-200 text-gray-600 font-black text-[10px] uppercase tracking-wider p-3 border-b border-gray-300">
             <div class="px-2">Fecha</div>
@@ -88,19 +95,10 @@ function filtrarFinanzas() {
         transFiltradas.forEach((t, i) => {
             if (t.tipo === "Ingreso") {
                 ingresos += t.monto;
-                // Le quitamos las tildes al texto para que no haya margen de error
-                let txt = t.concepto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                
-                if (txt.includes("transferencia") || txt.includes("pago movil")) {
-                    entradas_banco += t.monto;
-                } else {
-                    entradas_efectivo += t.monto;
-                }
             } else {
                 gastos += t.monto;
                 categorias_gastos[t.categoria] = (categorias_gastos[t.categoria] || 0) + t.monto;
             }
-
 
             let bg = i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40';
             let esIngreso = t.tipo === "Ingreso";
@@ -108,33 +106,20 @@ function filtrarFinanzas() {
             let colorMonto = esIngreso ? 'text-emerald-600' : 'text-red-600';
             let signo = esIngreso ? '+' : '-';
 
-            // TARJETA RESPONSIVA TIPO APP BANCARIA
             htmlTabla += `
             <div class="${bg} p-4 hover:bg-gray-100 transition-colors flex flex-col lg:grid lg:grid-cols-6 lg:items-center gap-2 lg:gap-0 border-b border-gray-200">
-                
-                <!-- MÓVIL: Fila superior (Tipo y Fecha) -->
                 <div class="flex justify-between items-center lg:hidden mb-2 border-b border-gray-100 pb-2">
                     <span class="px-2 py-1 rounded border font-black text-[10px] uppercase tracking-wider ${colorPildora}">${t.tipo}</span>
                     <span class="font-mono font-bold text-gray-500 text-xs">${t.fecha}</span>
                 </div>
-
-                <!-- PC: Fecha -->
-                <div class="hidden lg:block font-mono font-bold text-gray-600 text-sm px-2">
-                    ${t.fecha}
-                </div>
-
-                <!-- PC: Tipo -->
+                <div class="hidden lg:block font-mono font-bold text-gray-600 text-sm px-2">${t.fecha}</div>
                 <div class="hidden lg:block text-center px-2">
                     <span class="px-2 py-1 rounded border font-black text-[10px] uppercase tracking-wider ${colorPildora}">${t.tipo}</span>
                 </div>
-                
-                <!-- AMBOS: Concepto y Categoría -->
                 <div class="flex flex-col lg:col-span-3 px-2">
                     <span class="font-black text-gray-800 text-sm sm:text-base leading-tight">${t.concepto}</span>
                     <span class="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-1">${t.categoria || 'GENERAL'}</span>
                 </div>
-                
-                <!-- AMBOS: Monto -->
                 <div class="text-right mt-2 lg:mt-0 pt-2 lg:pt-0 border-t border-gray-100 lg:border-none px-2">
                     <span class="font-mono font-black ${colorMonto} text-xl sm:text-2xl">${signo} ${formMoneda(t.monto)}</span>
                 </div>
@@ -165,19 +150,8 @@ function filtrarFinanzas() {
 
         chartDistribucionGastos = new Chart(ctx.getContext('2d'), {
             type: 'doughnut',
-            data: { 
-                labels: labels, 
-                datasets: [{ 
-                    data: valores, 
-                    backgroundColor: ['#8B0000', '#EAA000', '#4B5563', '#1F2937', '#9CA3AF', '#DC2626', '#D97706'], 
-                    borderWidth: 2, borderColor: '#ffffff' 
-                }] 
-            },
-            options: { 
-                responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10, weight: 'bold' } } }, tooltip: { callbacks: { label: function(c) { return " " + formMoneda(c.raw); } } } }, 
-                cutout: '70%' 
-            }
+            data: { labels: labels, datasets: [{ data: valores, backgroundColor: ['#8B0000', '#EAA000', '#4B5563', '#1F2937', '#9CA3AF', '#DC2626', '#D97706'], borderWidth: 2, borderColor: '#ffffff' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10, weight: 'bold' } } }, tooltip: { callbacks: { label: function(c) { return " " + formMoneda(c.raw); } } } }, cutout: '70%' }
         });
     }
 }

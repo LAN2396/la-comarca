@@ -143,15 +143,36 @@ def registrar_produccion(prod_nueva: schemas.ModeloProduccion, db: Session = Dep
 def registrar_consumo(consumo: schemas.ModeloConsumoAlimento, db: Session = Depends(obtener_db)):
     lote = db.query(models.LoteDB).filter(models.LoteDB.id == consumo.lote_id).first()
     if not lote: raise HTTPException(status_code=404, detail="Lote no existe.")
+    
     calculo_gramos = (consumo.kilos_consumidos * 1000) / lote.cantidad_actual if lote.cantidad_actual > 0 else 0
+    
     db_consumo = models.ConsumoAlimentoDB(lote_id=consumo.lote_id, kilos_consumidos=consumo.kilos_consumidos, gramos_por_ave=round(calculo_gramos,2), fecha=consumo.fecha)
     db.add(db_consumo)
     
-    insumo = db.query(models.InsumoDB).filter(models.InsumoDB.categoria == "Alimento", models.InsumoDB.stock_actual > 0).first()
-    if insumo:
-        insumo.stock_actual = max(0, insumo.stock_actual - consumo.kilos_consumidos)
+    # === INICIO DE LÓGICA DE DESCUENTO EN CASCADA ===
+    kilos_a_descontar = float(consumo.kilos_consumidos)
+    
+    # 1. Traemos TODOS los insumos de tipo 'Alimento' usando .all() en lugar de .first()
+    insumos_alimento = db.query(models.InsumoDB).filter(
+        models.InsumoDB.categoria == "Alimento", 
+        models.InsumoDB.stock_actual > 0
+    ).order_by(models.InsumoDB.id).all()
+    
+    # 2. Revisamos saco por saco hasta vaciar la cantidad consumida
+    for insumo in insumos_alimento:
+        if kilos_a_descontar <= 0:
+            break # Si ya descontamos todo, detenemos el ciclo
+            
+        if insumo.stock_actual >= kilos_a_descontar:
+            insumo.stock_actual -= kilos_a_descontar
+            kilos_a_descontar = 0
+        else:
+            kilos_a_descontar -= insumo.stock_actual
+            insumo.stock_actual = 0
+    # === FIN DE LÓGICA DE DESCUENTO EN CASCADA ===
+
     db.commit()
-    return {"mensaje": "¡Consumo descontado!"}
+    return {"mensaje": "¡Consumo descontado correctamente en cascada!"}
 
 # --- CORRECTORES AUTO-SANADORES ---
 @router.get("/produccion/buscar/{lote_id}/{fecha}")

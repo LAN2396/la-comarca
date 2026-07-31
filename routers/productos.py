@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import math  # <-- Librería inyectada para forzar los números enteros
 import models, schemas
 from database import obtener_db
 
@@ -66,18 +67,23 @@ def eliminar_producto(prod_id: int, db: Session = Depends(obtener_db)):
 
 @router.post("/empaque/registrar")
 def registrar_empaque(datos: schemas.ModeloEmpaque, db: Session = Depends(obtener_db)):
-    total_cartones_empacados = 0
+    total_separadores_fisicos = 0
     
     for item in datos.items:
         producto = db.query(models.ProductoDB).filter(models.ProductoDB.id == item.producto_id).first()
         if producto:
+            # 1. El producto (los huevos empacados) sí recibe el decimal exacto
             producto.stock_cartones += item.cantidad_cartones
-            total_cartones_empacados += item.cantidad_cartones
+            
+            # 2. math.ceil() obliga a que los picos sueltos gasten 1 cartón físico entero
+            total_separadores_fisicos += math.ceil(item.cantidad_cartones)
             
     insumo_empaque = db.query(models.InsumoDB).filter(models.InsumoDB.categoria == "Empaque", models.InsumoDB.stock_actual > 0).first()
     if insumo_empaque:
-        insumo_empaque.stock_actual -= total_cartones_empacados
-        if insumo_empaque.stock_actual < 0: insumo_empaque.stock_actual = 0
+        # 3. Se descuentan únicamente los cartones físicos (números enteros)
+        insumo_empaque.stock_actual -= total_separadores_fisicos
+        if insumo_empaque.stock_actual < 0: 
+            insumo_empaque.stock_actual = 0
     
     db.commit()
-    return {"mensaje": "¡Empaque registrado! Se sumaron los cartones y se descontaron los separadores del almacén."}
+    return {"mensaje": "¡Empaque registrado! Se sumaron los huevos y se descontaron los separadores físicos."}
