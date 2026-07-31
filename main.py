@@ -59,3 +59,38 @@ def render_seguro(request: Request, name: str, context: dict = None):
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return render_seguro(request, "index.html")
+
+
+
+from sqlalchemy import text
+
+@app.get("/reparar-sistema")
+def reparar_sistema_base_datos(db: Session = Depends(get_db)):
+    mensajes = []
+    
+    # 1. Agregar la columna al almacén SIN borrar los insumos existentes
+    try:
+        db.execute(text("ALTER TABLE insumos ADD COLUMN ultimo_precio FLOAT DEFAULT 0.0;"))
+        db.commit()
+        mensajes.append("✅ Columna 'ultimo_precio' añadida correctamente.")
+    except Exception as e:
+        db.rollback()
+        mensajes.append("⚠️ La columna 'ultimo_precio' ya estaba lista.")
+
+    # 2. Corregir el dinero mal ubicado (Mover Pago Móvil a Bancos)
+    try:
+        # Busca cualquier transacción que diga "pago móvil" o "transferencia" 
+        # y le cambia la moneda a 'VES' para que el sistema lo cuente como Banco y no como Efectivo.
+        db.execute(text("""
+            UPDATE transacciones 
+            SET moneda = 'VES' 
+            WHERE tipo = 'Ingreso' 
+            AND (concepto ILIKE '%pago m_vil%' OR concepto ILIKE '%transferencia%');
+        """))
+        db.commit()
+        mensajes.append("✅ Dinero reubicado: Los pagos móviles antiguos fueron pasados a la cuenta de Bancos.")
+    except Exception as e:
+        db.rollback()
+        mensajes.append(f"❌ Error al reubicar el dinero: {str(e)}")
+        
+    return {"estado": "Mantenimiento Completado", "resultados": mensajes}

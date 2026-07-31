@@ -342,7 +342,7 @@ function filtrarFacturas() {
 
 function renderizarTablaFacturas(facturas) {
     let html = ''; 
-    let tf = 0, tc_efectivo = 0, tc_bancos = 0, tcr = 0;
+    let tf = 0, tc_efectivo = 0, tc_bancos = 0, tc_bancos_bs = 0, tcr = 0;
     
     if (!Array.isArray(facturas) || facturas.length === 0) {
         html = `<div class="p-8 text-center text-gray-400 italic text-sm font-medium">No se encontraron facturas.</div>`;
@@ -353,14 +353,20 @@ function renderizarTablaFacturas(facturas) {
             
             let cobrado = f.total - saldo;
             let esBanco = (f.condicion === 'Transferencia' || f.condicion === 'Pago Móvil');
-            if (esBanco) tc_bancos += cobrado; else tc_efectivo += cobrado; 
+            
+            if (esBanco) {
+                tc_bancos += cobrado;
+                // Calculamos los Bolívares usando el registro exacto de la base de datos o la tasa actual
+                tc_bancos_bs += (f.monto_ves && f.monto_ves > 0) ? f.monto_ves : (cobrado * (f.tasa_cambio || TASA_BCV_ACTUAL));
+            } else {
+                tc_efectivo += cobrado; 
+            }
 
             let colC = saldo > 0 ? 'text-comarca-rojo bg-red-100 border-red-200' : 'text-emerald-700 bg-emerald-100 border-emerald-200';
             let txtEst = saldo > 0 ? 'Deuda' : 'Pagado'; 
             
             html += `
             <div class="flex flex-col md:flex-row justify-between md:items-center p-3 sm:p-4 bg-white hover:bg-red-50/10 transition-colors gap-3 border-b border-gray-200 last:border-b-0">
-                
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="font-mono font-black text-gray-800 text-[11px] bg-gray-100 px-2 py-0.5 rounded border border-gray-200 shadow-sm">${f.numero_factura}</span>
@@ -381,17 +387,11 @@ function renderizarTablaFacturas(facturas) {
                     <div class="text-right w-1/2 md:w-full md:mt-2 pl-3 border-l border-gray-200 md:border-0 md:pl-0">
                         <span class="block text-[9px] font-black text-comarca-rojo uppercase tracking-widest leading-none mb-1">Por Cobrar</span>
                         <span class="font-mono font-black text-base text-comarca-rojo leading-none">${formMoneda(saldo)}</span>
-                    </div>` : `
-                    <div class="hidden md:block md:mt-2 h-[26px] w-full"></div>
-                    `}
+                    </div>` : `<div class="hidden md:block md:mt-2 h-[26px] w-full"></div>`}
                 </div>
                 
                 <div class="flex flex-row md:flex-col justify-end items-center md:items-end w-full md:w-24 gap-2 mt-2 md:mt-0 pt-2 md:pt-0 border-t border-gray-100 md:border-0">
-                    ${saldo > 0 ? `
-                    <button onclick="abrirModalCobro('${f.numero_factura}', ${saldo}, '${f.cliente}')" class="w-full bg-emerald-600 text-white py-1.5 rounded text-[10px] font-black shadow-sm hover:bg-emerald-700 uppercase tracking-widest transition-transform active:scale-95">Cobrar</button>
-                    ` : `
-                    <div class="hidden md:block h-[28px] w-full"></div>
-                    `}
+                    ${saldo > 0 ? `<button onclick="abrirModalCobro('${f.numero_factura}', ${saldo}, '${f.cliente}')" class="w-full bg-emerald-600 text-white py-1.5 rounded text-[10px] font-black shadow-sm hover:bg-emerald-700 uppercase tracking-widest transition-transform active:scale-95">Cobrar</button>` : `<div class="hidden md:block h-[28px] w-full"></div>`}
                     <button onclick="reimprimirFactura('${f.numero_factura}')" class="w-full bg-gray-800 text-white py-1.5 rounded text-[10px] font-black shadow-sm hover:bg-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-transform active:scale-95">
                         <span>🖨️</span> Ticket
                     </button>
@@ -409,8 +409,11 @@ function renderizarTablaFacturas(facturas) {
     let lblEfe = document.getElementById('lbl_fact_efectivo');
     if(lblEfe) lblEfe.innerText = formMoneda(tc_efectivo);
     
+    // AQUÍ INYECTAMOS LOS BOLÍVARES EN LA MISMA LÍNEA PARA NO DEFORMAR LA TARJETA
     let lblBan = document.getElementById('lbl_fact_bancos');
-    if(lblBan) lblBan.innerText = formMoneda(tc_bancos);
+    if (lblBan) {
+        lblBan.innerHTML = `${formMoneda(tc_bancos)} <span class="text-sm font-bold text-gray-500 ml-1">~ Bs ${tc_bancos_bs.toLocaleString('es-VE', {minimumFractionDigits: 2})}</span>`;
+    }
     
     let lblCre = document.getElementById('lbl_fact_credito');
     if(lblCre) lblCre.innerText = formMoneda(tcr);

@@ -88,10 +88,19 @@ function filtrarFinanzas() {
         transFiltradas.forEach((t, i) => {
             if (t.tipo === "Ingreso") {
                 ingresos += t.monto;
+                // Le quitamos las tildes al texto para que no haya margen de error
+                let txt = t.concepto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                
+                if (txt.includes("transferencia") || txt.includes("pago movil")) {
+                    entradas_banco += t.monto;
+                } else {
+                    entradas_efectivo += t.monto;
+                }
             } else {
                 gastos += t.monto;
                 categorias_gastos[t.categoria] = (categorias_gastos[t.categoria] || 0) + t.monto;
             }
+
 
             let bg = i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40';
             let esIngreso = t.tipo === "Ingreso";
