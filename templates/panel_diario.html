@@ -1,22 +1,76 @@
-<div id="panel-diario" class="panel-seccion hidden grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-base font-bold text-comarca-rojo mb-4 flex items-center gap-2">📝 Producción y Bajas</h2>
-        <form id="formReporte" class="space-y-4">
-            <select id="lote_id_prod" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded text-gray-700 font-bold" required></select>
-            <input type="number" min="0" id="cantidad_huevos" placeholder="Huevos Recolectados" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
-            <input type="number" min="0" id="mortalidad" placeholder="Mortalidad (Ej: 0)" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
-            <input type="date" id="fecha_prod" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
-            <button type="submit" class="w-full bg-comarca-rojo text-white font-bold p-3 rounded hover:bg-red-900">Guardar Producción</button>
-        </form>
-    </div>
+<div id="panel-diario" class="panel-seccion hidden max-w-5xl mx-auto w-full mt-2">
     
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-base font-bold text-yellow-600 mb-4 flex items-center gap-2">🌾 Consumo de Alimento</h2>
-        <form id="formAlimento" class="space-y-4">
-            <select id="lote_id_alim" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded text-gray-700 font-bold" required></select>
-            <input type="number" step="0.01" min="0" id="kilos_consumidos" placeholder="Kilos Consumidos" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
-            <input type="date" id="fecha_alim" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
-            <button type="submit" class="w-full bg-comarca-dorado text-black font-bold p-3 rounded hover:bg-yellow-600">Registrar Consumo</button>
-        </form>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 border-t-4 border-t-comarca-rojo">
+            <div class="bg-gray-50 p-3 border-b border-gray-200">
+                <h2 class="text-sm font-black text-gray-800 flex items-center gap-2"><span class="text-lg">📝</span> Producción y Bajas</h2>
+            </div>
+            
+            <div class="p-4 sm:p-5">
+                <form id="formReporte" class="space-y-3">
+                    <div class="flex flex-col gap-3">
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Lote Activo</label>
+                            <select id="lote_id_prod" class="w-full h-11 px-3 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold text-gray-800 cursor-pointer text-sm" required></select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Fecha del Reporte</label>
+                            <input type="date" id="fecha_prod" class="w-full h-11 px-3 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold text-gray-800 cursor-pointer text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Huevos Recolectados</label>
+                            <input type="number" id="cantidad_huevos" min="0" placeholder="Total" class="w-full h-12 px-3 bg-white border-2 border-gray-200 rounded focus:border-red-600 focus:ring-0 outline-none font-black text-lg text-center transition-colors" required>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-red-500 ml-1 mb-0.5 uppercase tracking-wider">Aves Muertas (Mortalidad)</label>
+                            <input type="number" id="mortalidad" min="0" placeholder="0" class="w-full h-12 px-3 bg-red-50 border-2 border-red-200 rounded focus:border-red-600 focus:ring-0 outline-none font-black text-lg text-red-700 text-center transition-colors" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full h-11 bg-comarca-rojo text-white font-black rounded hover:bg-red-900 shadow-sm transition mt-4 text-xs uppercase tracking-wider">Guardar Producción</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 border-t-4 border-t-comarca-dorado">
+            <div class="bg-gray-50 p-3 border-b border-gray-200">
+                <h2 class="text-sm font-black text-gray-800 flex items-center gap-2"><span class="text-lg">🌾</span> Consumo de Alimento</h2>
+            </div>
+            
+            <div class="p-4 sm:p-5">
+                <form id="formAlimento" class="space-y-3">
+                    <div class="flex flex-col gap-3">
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Lote Activo</label>
+                            <select id="lote_id_alim" class="w-full h-11 px-3 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-yellow-600 outline-none font-bold text-gray-800 cursor-pointer text-sm" required></select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Fecha del Consumo</label>
+                            <input type="date" id="fecha_alim" class="w-full h-11 px-3 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-yellow-600 outline-none font-bold text-gray-800 cursor-pointer text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Alimento Consumido (Kg)</label>
+                            <input type="number" step="0.01" id="kilos_consumidos" min="0" placeholder="0.0" class="w-full h-12 px-3 bg-yellow-50 border-2 border-yellow-200 rounded focus:border-yellow-600 focus:ring-0 outline-none font-black text-lg text-yellow-800 text-center transition-colors" required>
+                        </div>
+                    </div>
+                    
+                    <p class="text-[9px] text-gray-400 mt-1.5 text-center font-bold uppercase tracking-wider">Automático: Se descontará del almacén</p>
+                    <button type="submit" class="w-full h-11 bg-comarca-dorado text-black font-black rounded hover:bg-yellow-500 shadow-sm transition mt-2 text-xs uppercase tracking-wider">Registrar Consumo</button>
+                </form>
+            </div>
+        </div>
+
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const hoy = new Date().toISOString().split('T')[0];
+        const inputFechaProd = document.getElementById('fecha_prod');
+        const inputFechaAlim = document.getElementById('fecha_alim');
+        
+        if(inputFechaProd && !inputFechaProd.value) inputFechaProd.value = hoy;
+        if(inputFechaAlim && !inputFechaAlim.value) inputFechaAlim.value = hoy;
+    });
+</script>

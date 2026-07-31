@@ -8,7 +8,12 @@ import models
 from database import engine
 
 # 1. IMPORTAMOS NUESTROS MÓDULOS (Enrutadores)
-from routers import auth, almacen, productos, lotes, facturacion, finanzas
+from routers import finanzas
+from routers import auth
+from routers import almacen
+from routers import productos
+from routers import lotes
+from routers import facturacion
 
 app = FastAPI(title="Sistema Avícola La Comarca")
 

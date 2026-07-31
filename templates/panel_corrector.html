@@ -1,39 +1,42 @@
-<div id="panel-corrector" class="panel-seccion hidden grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-blue-500">
-        <h2 class="text-base font-bold text-blue-700 mb-4 flex items-center gap-2">🔄 Corregir Producción / Bajas</h2>
-        <div class="grid grid-cols-2 gap-2 mb-4">
-            <select id="corr_prod_lote" class="w-full p-2 bg-gray-50 border border-gray-300 rounded text-sm font-bold text-gray-700" required></select>
-            <input type="date" id="corr_prod_fecha" class="w-full p-2 bg-gray-50 border border-gray-300 rounded text-sm" required>
-        </div>
-        <button type="button" onclick="buscarProdParaCorregir()" class="w-full bg-blue-100 text-blue-700 font-bold p-2 rounded hover:bg-blue-200 text-sm mb-4">Buscar Registro</button>
+<div id="panel-corrector" class="panel-seccion hidden max-w-5xl mx-auto w-full mt-2">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         
-        <form id="formCorrProd" class="space-y-4 hidden">
-            <div>
-                <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">NUEVA CANT. HUEVOS</label>
-                <input type="number" min="0" id="nuevo_cant_huevos" class="w-full p-2.5 bg-white border border-blue-300 rounded" required>
+        <div class="bg-white p-5 rounded-lg shadow-md border border-gray-200 border-t-4 border-t-comarca-rojo flex flex-col">
+            <h2 class="text-base font-black text-comarca-rojo mb-4 flex items-center gap-2">🔄 Corregir Producción / Bajas</h2>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <select id="corr_prod_lote" class="w-full h-11 px-2 bg-gray-50 border border-gray-300 rounded text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-red-800" required></select>
+                <input type="date" id="corr_prod_fecha" class="w-full h-11 px-2 bg-gray-50 border border-gray-300 rounded text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-red-800" required>
             </div>
-            <div>
-                <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">NUEVA MORTALIDAD (EL INVENTARIO SE AUTO-AJUSTARÁ)</label>
-                <input type="number" min="0" id="nuevo_mortalidad" class="w-full p-2.5 bg-white border border-blue-300 rounded" required>
-            </div>
-            <button type="submit" class="w-full bg-blue-600 text-white font-bold p-3 rounded hover:bg-blue-800 shadow">Guardar Corrección</button>
-        </form>
-    </div>
+            <button type="button" onclick="buscarProdParaCorregir()" class="w-full h-11 bg-red-50 text-red-700 border border-red-200 font-black rounded hover:bg-red-100 transition text-xs mb-2 shadow-sm uppercase tracking-wider">🔍 Buscar Registro</button>
+            
+            <form id="formCorrProd" class="space-y-4 hidden mt-4 border-t border-gray-100 pt-4">
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 ml-1 mb-1 uppercase tracking-wider">NUEVA CANT. HUEVOS</label>
+                    <input type="number" min="0" id="nuevo_cant_huevos" class="w-full h-11 px-3 bg-white border border-gray-300 rounded focus:ring-2 focus:ring-red-800 outline-none font-black text-lg text-center" required>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-red-500 ml-1 mb-1 uppercase tracking-wider">NUEVA MORTALIDAD (AUTO-AJUSTABLE)</label>
+                    <input type="number" min="0" id="nuevo_mortalidad" class="w-full h-11 px-3 bg-red-50 border border-red-300 rounded focus:ring-2 focus:ring-red-800 outline-none font-black text-lg text-center text-red-700" required>
+                </div>
+                <button type="submit" class="w-full h-11 bg-comarca-rojo text-white font-black rounded hover:bg-red-900 shadow-sm transition text-sm mt-2">Guardar Corrección</button>
+            </form>
+        </div>
 
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-amber-500">
-        <h2 class="text-base font-bold text-amber-600 mb-4 flex items-center gap-2">🔄 Corregir Consumo de Alimento</h2>
-        <div class="grid grid-cols-2 gap-2 mb-4">
-            <select id="corr_alim_lote" class="w-full p-2 bg-gray-50 border border-gray-300 rounded text-sm font-bold text-gray-700" required></select>
-            <input type="date" id="corr_alim_fecha" class="w-full p-2 bg-gray-50 border border-gray-300 rounded text-sm" required>
-        </div>
-        <button type="button" onclick="buscarAlimParaCorregir()" class="w-full bg-amber-100 text-amber-700 font-bold p-2 rounded hover:bg-amber-200 text-sm mb-4">Buscar Registro</button>
-        
-        <form id="formCorrAlim" class="space-y-4 hidden">
-            <div>
-                <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">NUEVO CONSUMO (KILOS)</label>
-                <input type="number" step="0.01" min="0" id="nuevo_kilos" class="w-full p-2.5 bg-white border border-amber-300 rounded" required>
+        <div class="bg-white p-5 rounded-lg shadow-md border border-gray-200 border-t-4 border-t-comarca-dorado flex flex-col">
+            <h2 class="text-base font-black text-yellow-700 mb-4 flex items-center gap-2">🔄 Corregir Alimento</h2>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <select id="corr_alim_lote" class="w-full h-11 px-2 bg-gray-50 border border-gray-300 rounded text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-yellow-600" required></select>
+                <input type="date" id="corr_alim_fecha" class="w-full h-11 px-2 bg-gray-50 border border-gray-300 rounded text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-yellow-600" required>
             </div>
-            <button type="submit" class="w-full bg-amber-500 text-white font-bold p-3 rounded hover:bg-amber-600 shadow">Guardar Corrección</button>
-        </form>
+            <button type="button" onclick="buscarAlimParaCorregir()" class="w-full h-11 bg-yellow-50 text-yellow-700 border border-yellow-200 font-black rounded hover:bg-yellow-100 transition text-xs mb-2 shadow-sm uppercase tracking-wider">🔍 Buscar Registro</button>
+            
+            <form id="formCorrAlim" class="space-y-4 hidden mt-4 border-t border-gray-100 pt-4">
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 ml-1 mb-1 uppercase tracking-wider">NUEVO CONSUMO (KILOS)</label>
+                    <input type="number" step="0.01" min="0" id="nuevo_kilos" class="w-full h-11 px-3 bg-yellow-50 border border-yellow-300 rounded focus:ring-2 focus:ring-yellow-600 outline-none font-black text-lg text-center text-yellow-800" required>
+                </div>
+                <button type="submit" class="w-full h-11 bg-comarca-dorado text-black font-black rounded hover:bg-yellow-500 shadow-sm transition text-sm mt-2">Guardar Corrección</button>
+            </form>
+        </div>
     </div>
 </div>

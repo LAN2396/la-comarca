@@ -92,15 +92,39 @@ def obtener_historial(dias: int, db: Session = Depends(obtener_db)):
     historial_dict = {}
     for p in producciones:
         key = f"{p.fecha}_{p.lote_id}"
-        historial_dict[key] = {"fecha": p.fecha.strftime("%Y-%m-%d"), "lote_nombre": lotes_cache.get(p.lote_id, f"Lote {p.lote_id}"), "huevos": p.cantidad_huevos, "mortalidad": p.mortalidad, "alimento": 0.0}
+        historial_dict[key] = {
+            "fecha": p.fecha.strftime("%Y-%m-%d"), 
+            "lote_nombre": lotes_cache.get(p.lote_id, f"Lote {p.lote_id}"), 
+            "huevos": p.cantidad_huevos, 
+            "mortalidad": p.mortalidad, 
+            "alimento": 0.0,
+            "postura": p.porcentaje_postura  # 👈 Nueva métrica agregada
+        }
         
     for a in alimentos:
         key = f"{a.fecha}_{a.lote_id}"
-        if key in historial_dict: historial_dict[key]["alimento"] = a.kilos_consumidos
+        if key in historial_dict: 
+            historial_dict[key]["alimento"] = a.kilos_consumidos
         else:
-            historial_dict[key] = {"fecha": a.fecha.strftime("%Y-%m-%d"), "lote_nombre": lotes_cache.get(a.lote_id, f"Lote {a.lote_id}"), "huevos": 0, "mortalidad": 0, "alimento": a.kilos_consumidos}
+            historial_dict[key] = {
+                "fecha": a.fecha.strftime("%Y-%m-%d"), 
+                "lote_nombre": lotes_cache.get(a.lote_id, f"Lote {a.lote_id}"), 
+                "huevos": 0, 
+                "mortalidad": 0, 
+                "alimento": a.kilos_consumidos,
+                "postura": "0%"
+            }
             
     lista_historial = list(historial_dict.values())
+    
+    # 👈 NUEVO: Calcular Conversión Alimenticia (gramos de alimento por huevo)
+    for item in lista_historial:
+        if item["huevos"] > 0 and item["alimento"] > 0:
+            conversion = (item["alimento"] * 1000) / item["huevos"]
+            item["conversion"] = round(conversion, 1)
+        else:
+            item["conversion"] = 0.0
+
     lista_historial.sort(key=lambda x: x["fecha"], reverse=True)
     return lista_historial
 

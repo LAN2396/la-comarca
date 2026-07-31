@@ -14,7 +14,7 @@ async function cargarDashboardFinanzas() {
         
         if(document.getElementById('lbl_caja_usd')) document.getElementById('lbl_caja_usd').innerText = formMoneda(data.caja_usd);
         let lblBanco = document.getElementById('lbl_banco_ves');
-        if(lblBanco) lblBanco.innerHTML = `Bs ${data.banco_ves.toLocaleString('es-VE', {minimumFractionDigits: 2})}<br><span class="text-sm text-gray-500 font-normal">Eqv: ${formMoneda(data.usd_real_banco)}</span>`;
+        if(lblBanco) lblBanco.innerHTML = `Bs ${data.banco_ves.toLocaleString('es-VE', {minimumFractionDigits: 2})}<br><span class="text-[10px] text-gray-500 font-bold tracking-wider uppercase">Eqv: ${formMoneda(data.usd_real_banco)}</span>`;
 
         let lblPerdida = document.getElementById('lbl_perdida_cambiaria');
         if(lblPerdida) {
@@ -26,7 +26,7 @@ async function cargarDashboardFinanzas() {
                 lblPerdida.classList.remove('text-red-600');
             }
         }
-        if(document.getElementById('lbl_capital_total')) document.getElementById('lbl_capital_total').innerText = formMoneda(data.capital_total);
+        
         if(document.getElementById('lbl_por_cobrar')) document.getElementById('lbl_por_cobrar').innerText = formMoneda(data.por_cobrar);
 
         cacheFinanzas = data.transacciones;
@@ -69,54 +69,81 @@ function filtrarFinanzas() {
         return true;
     });
 
-    let ingresos = 0, gastos = 0, entradas_efectivo = 0, entradas_banco = 0;
+    let ingresos = 0, gastos = 0;
     let categorias_gastos = {};
     let htmlTabla = '';
 
     if (transFiltradas.length === 0) {
-        htmlTabla = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400 italic font-medium">No hay movimientos.</td></tr>`;
+        htmlTabla = `<div class="p-8 text-center text-gray-400 italic font-bold text-sm">No hay movimientos en este periodo.</div>`;
     } else {
+        // ENCABEZADOS PC
+        htmlTabla += `
+        <div class="hidden lg:grid lg:grid-cols-6 bg-gray-200 text-gray-600 font-black text-[10px] uppercase tracking-wider p-3 border-b border-gray-300">
+            <div class="px-2">Fecha</div>
+            <div class="text-center px-2">Tipo</div>
+            <div class="col-span-3 px-2">Concepto del Movimiento</div>
+            <div class="text-right px-2">Monto ($)</div>
+        </div>`;
+
         transFiltradas.forEach((t, i) => {
             if (t.tipo === "Ingreso") {
                 ingresos += t.monto;
-                let txt = t.concepto.toLowerCase();
-                if (txt.includes("efectivo") || txt.includes("zelle")) entradas_efectivo += t.monto;
-                else if (txt.includes("transferencia") || txt.includes("pago móvil")) entradas_banco += t.monto;
             } else {
                 gastos += t.monto;
                 categorias_gastos[t.categoria] = (categorias_gastos[t.categoria] || 0) + t.monto;
             }
 
-            let bg = i % 2 === 0 ? 'bg-gray-50/50' : 'bg-white';
+            let bg = i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40';
             let esIngreso = t.tipo === "Ingreso";
             let colorPildora = esIngreso ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-red-100 text-red-700 border-red-200';
             let colorMonto = esIngreso ? 'text-emerald-600' : 'text-red-600';
             let signo = esIngreso ? '+' : '-';
-            let detalle = t.categoria ? `<br><span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">${t.categoria}</span>` : '';
 
-            htmlTabla += `<tr class="${bg} hover:bg-gray-100 border-b border-gray-100">
-                <td class="px-4 py-3 text-xs font-mono font-bold text-gray-600">${t.fecha}</td>
-                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded border font-black text-[10px] uppercase tracking-wider ${colorPildora}">${t.tipo}</span></td>
-                <td class="px-4 py-3 font-bold text-gray-800">${t.concepto}${detalle}</td>
-                <td class="px-4 py-3 text-right font-mono font-black ${colorMonto} text-base">${signo} ${formMoneda(t.monto)}</td>
-            </tr>`;
+            // TARJETA RESPONSIVA TIPO APP BANCARIA
+            htmlTabla += `
+            <div class="${bg} p-4 hover:bg-gray-100 transition-colors flex flex-col lg:grid lg:grid-cols-6 lg:items-center gap-2 lg:gap-0 border-b border-gray-200">
+                
+                <!-- MÓVIL: Fila superior (Tipo y Fecha) -->
+                <div class="flex justify-between items-center lg:hidden mb-2 border-b border-gray-100 pb-2">
+                    <span class="px-2 py-1 rounded border font-black text-[10px] uppercase tracking-wider ${colorPildora}">${t.tipo}</span>
+                    <span class="font-mono font-bold text-gray-500 text-xs">${t.fecha}</span>
+                </div>
+
+                <!-- PC: Fecha -->
+                <div class="hidden lg:block font-mono font-bold text-gray-600 text-sm px-2">
+                    ${t.fecha}
+                </div>
+
+                <!-- PC: Tipo -->
+                <div class="hidden lg:block text-center px-2">
+                    <span class="px-2 py-1 rounded border font-black text-[10px] uppercase tracking-wider ${colorPildora}">${t.tipo}</span>
+                </div>
+                
+                <!-- AMBOS: Concepto y Categoría -->
+                <div class="flex flex-col lg:col-span-3 px-2">
+                    <span class="font-black text-gray-800 text-sm sm:text-base leading-tight">${t.concepto}</span>
+                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-1">${t.categoria || 'GENERAL'}</span>
+                </div>
+                
+                <!-- AMBOS: Monto -->
+                <div class="text-right mt-2 lg:mt-0 pt-2 lg:pt-0 border-t border-gray-100 lg:border-none px-2">
+                    <span class="font-mono font-black ${colorMonto} text-xl sm:text-2xl">${signo} ${formMoneda(t.monto)}</span>
+                </div>
+            </div>`;
         });
     }
 
     let balance = ingresos - gastos;
     let porcentajeGanancia = ingresos > 0 ? (balance / ingresos) * 100 : 0;
+    
     if (document.getElementById('dash_ingresos')) document.getElementById('dash_ingresos').innerText = formMoneda(ingresos);
     if (document.getElementById('dash_egresos')) document.getElementById('dash_egresos').innerText = formMoneda(gastos);
     
     let lblGanancia = document.getElementById('lbl_porcentaje_ganancia');
     if (lblGanancia) {
         lblGanancia.innerText = porcentajeGanancia.toFixed(2) + "%";
-        lblGanancia.className = `text-2xl font-black font-mono ${porcentajeGanancia >= 0 ? 'text-purple-700' : 'text-red-600'}`;
+        lblGanancia.className = `text-2xl font-black font-mono mt-1 ${porcentajeGanancia >= 0 ? 'text-yellow-600' : 'text-red-600'}`;
     }
-
-    if (document.getElementById('dash_efectivo')) document.getElementById('dash_efectivo').innerText = formMoneda(entradas_efectivo);
-    if (document.getElementById('dash_banco')) document.getElementById('dash_banco').innerText = formMoneda(entradas_banco);
-    if (document.getElementById('dash_porcobrar')) document.getElementById('dash_porcobrar').innerText = formMoneda(deudaGlobalFinanzas);
 
     document.getElementById('tabla-finanzas-body').innerHTML = htmlTabla;
 
@@ -129,8 +156,19 @@ function filtrarFinanzas() {
 
         chartDistribucionGastos = new Chart(ctx.getContext('2d'), {
             type: 'doughnut',
-            data: { labels: labels, datasets: [{ data: valores, backgroundColor: ['#f97316', '#8b0000', '#3b82f6', '#10b981', '#8b5cf6', '#eab308'], borderWidth: 2, borderColor: '#ffffff' }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } }, tooltip: { callbacks: { label: function(c) { return " " + formMoneda(c.raw); } } } }, cutout: '65%' }
+            data: { 
+                labels: labels, 
+                datasets: [{ 
+                    data: valores, 
+                    backgroundColor: ['#8B0000', '#EAA000', '#4B5563', '#1F2937', '#9CA3AF', '#DC2626', '#D97706'], 
+                    borderWidth: 2, borderColor: '#ffffff' 
+                }] 
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10, weight: 'bold' } } }, tooltip: { callbacks: { label: function(c) { return " " + formMoneda(c.raw); } } } }, 
+                cutout: '70%' 
+            }
         });
     }
 }

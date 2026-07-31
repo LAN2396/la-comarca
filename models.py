@@ -82,9 +82,12 @@ class InsumoDB(Base):
     __tablename__ = "insumos"
     id = Column(Integer, primary_key=True, index=True)
     nombre = Column(String, index=True)
-    categoria = Column(String)      # Ej: "Alimento", "Empaque", "Medicina"
-    unidad_medida = Column(String)  # Ej: "Kg", "Unidad", "Frasco"
-    stock_actual = Column(Float, default=0.0) # El inventario real
+    categoria = Column(String)
+    unidad_medida = Column(String)
+    stock_actual = Column(Float, default=0.0)
+    
+    # 🔥 AGREGA ESTA LÍNEA EXACTAMENTE ASÍ:
+    ultimo_precio = Column(Float, default=0.0)
 
 # --- NUEVOS MODELOS PARA FACTURACIÓN Y CLIENTES ---
 

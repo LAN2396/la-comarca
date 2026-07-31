@@ -5,11 +5,21 @@ from typing import List, Optional
 # =========================================
 # MODELOS DE ALMACÉN E INSUMOS
 # =========================================
-class ModeloInsumo(BaseModel):
+class InsumoSchema(BaseModel):
     nombre: str
     categoria: str
     unidad_medida: str
-    stock_actual: float = 0.0
+    stock_actual: float
+    ultimo_precio: float = 0.0  # 🔥 Nuevo campo agregado
+
+# 🔥 Nuevo esquema para poder editar
+class InsumoEditSchema(BaseModel):
+    id: int
+    nombre: str
+    categoria: str
+    unidad_medida: str
+    stock_actual: float
+    ultimo_precio: float
 
 class ModeloCompraInsumo(BaseModel):
     insumo_id: int

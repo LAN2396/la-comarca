@@ -1,27 +1,42 @@
-<div id="panel-empaque" class="panel-seccion hidden max-w-3xl mx-auto">
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-orange-500 mb-6">
-        <h2 class="text-lg font-black text-orange-600 mb-4 flex items-center gap-2">🥚 Centro de Clasificación y Empaque</h2>
-        <p class="text-sm text-gray-500 mb-6">Convierte la producción bruta del galpón en cartones listos para la venta. Lo que ingreses aquí se sumará automáticamente a tu stock de ventas.</p>
+<div id="panel-empaque" class="panel-seccion hidden space-y-4 max-w-4xl mx-auto w-full mt-2">
+    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 border-t-4 border-t-comarca-dorado">
         
-        <form id="formEmpaque" class="space-y-6">
-            <div>
-                <label class="block text-xs font-bold text-gray-500 ml-1 mb-1">FECHA DE CLASIFICACIÓN</label>
-                <input type="date" id="fecha_empaque" class="w-full md:w-1/2 p-2.5 bg-gray-50 border border-gray-300 rounded font-bold" required>
-            </div>
-
-            <div class="bg-orange-50 p-4 rounded-lg border border-orange-200 shadow-inner">
-                <h3 class="text-sm font-bold text-orange-800 mb-3">Cartones Empacados (Ingresa la cantidad)</h3>
-                <div id="contenedor-productos-empaque" class="space-y-3">
-                    <p class="text-xs text-gray-500 italic">Cargando tipos de huevos...</p>
+        <div class="bg-gray-50 p-3 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="text-base font-black text-gray-800 flex items-center gap-2"><span class="text-xl">🥚</span> Centro de Clasificación</h2>
+        </div>
+        
+        <div class="p-4 sm:p-5">
+            <form id="formEmpaque" class="space-y-4 text-sm">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Fecha de Empaque</label>
+                        <input type="date" id="fecha_empaque" class="w-full h-11 px-3 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:border-yellow-500 focus:ring-yellow-500 outline-none font-bold text-gray-800 cursor-pointer transition-colors" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-red-600 ml-1 mb-0.5 uppercase tracking-wider">Huevos Rotos / Descarte</label>
+                        <input type="number" id="huevos_descarte" min="0" placeholder="Ej: 5" class="w-full h-11 px-3 bg-red-50 border-2 border-red-300 rounded focus:border-red-600 focus:ring-0 outline-none font-black text-lg text-red-700 text-center transition-colors">
+                    </div>
                 </div>
-            </div>
 
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <label class="block text-xs font-bold text-gray-700 ml-1 mb-1">HUEVOS DESCARTADOS (Rotos, sucios, fárfara)</label>
-                <input type="number" min="0" id="huevos_descarte" value="0" class="w-full md:w-1/2 p-2.5 bg-white border border-gray-300 rounded font-bold text-red-600">
-            </div>
+                <div>
+                    <h3 class="text-xs font-black text-gray-700 uppercase tracking-wider mb-2 border-b border-gray-200 pb-1.5">Distribuir Producción en:</h3>
+                    
+                    <div id="contenedor-productos-empaque" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div class="p-6 text-center text-gray-400 font-bold w-full col-span-full animate-pulse text-xs">Cargando productos...</div>
+                    </div>
+                </div>
 
-            <button type="submit" class="w-full bg-orange-600 text-white font-bold p-3 rounded hover:bg-orange-700 shadow transition">Procesar Empaque y Sumar al Inventario</button>
-        </form>
+                <button type="submit" class="w-full h-11 bg-comarca-dorado text-black font-black rounded hover:bg-yellow-500 shadow-sm transition text-sm uppercase tracking-wide mt-2">Guardar Empaque e Inventario</button>
+            </form>
+        </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const hoy = new Date().toISOString().split('T')[0];
+        const inputFechaEmp = document.getElementById('fecha_empaque');
+        if(inputFechaEmp && !inputFechaEmp.value) inputFechaEmp.value = hoy;
+    });
+</script>

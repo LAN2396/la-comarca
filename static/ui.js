@@ -1,21 +1,39 @@
 // =========================================
-// INTERFAZ DE USUARIO Y NAVEGACIÓN
+// INTERFAZ DE USUARIO Y NAVEGACIÓN (100% NATIVA)
 // =========================================
 
-// Bloque que coloca la fecha de hoy por defecto en los formularios
 document.addEventListener("DOMContentLoaded", () => {
+    // 1. Fechas máximas
     const inputsFecha = ['fecha_prod', 'fecha_alim', 'lote_fecha', 'corr_prod_fecha', 'corr_alim_fecha', 'fecha_empaque'];
     inputsFecha.forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-            el.max = hoy;
-            el.value = hoy;
-        }
+        if (el) { el.max = hoy; el.value = hoy; }
     });
+
+    // 2. Al arrancar, si no hay hash, le ponemos uno y Chrome inicia el historial real
+    if (!window.location.hash) {
+        window.location.hash = 'panel-lotes';
+    } else {
+        ejecutarCambioPestana(window.location.hash.replace('#', ''));
+    }
 });
 
-// Función central para cambiar de pantalla
+// ESCUCHA EL BOTÓN ATRÁS DE ANDROID DE FORMA NATURAL
+window.addEventListener('hashchange', () => {
+    let panelId = window.location.hash.replace('#', '');
+    if (panelId) {
+        ejecutarCambioPestana(panelId);
+    }
+});
+
+// Función de "emergencia" por si algún otro archivo (como el POS) 
+// necesita cambiar de pestaña mediante código
 function cambiarPestana(panelId) {
+    window.location.hash = panelId;
+}
+
+// LA LÓGICA VISUAL INTACTA
+function ejecutarCambioPestana(panelId) {
     document.querySelectorAll('.panel-seccion').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.pestana-btn').forEach(el => {
         el.classList.remove('bg-red-900', 'text-white', 'shadow-inner');
@@ -50,7 +68,7 @@ function cambiarPestana(panelId) {
     let tituloSeccion = document.getElementById('titulo-seccion');
     if (tituloSeccion) tituloSeccion.innerText = titulos[panelId] || 'Panel de Control';
 
-    // Disparadores que actualizan la información al entrar a la pestaña
+    // Disparadores
     if (panelId === 'panel-productos' && typeof cargarProductos === 'function') cargarProductos();
     if (panelId === 'panel-historial-facturas' && typeof cargarHistorialFacturas === 'function') cargarHistorialFacturas();
     if (panelId === 'panel-facturacion') {
@@ -66,23 +84,19 @@ function cambiarPestana(panelId) {
     if (panelId === 'panel-graficos' && typeof dibujarGraficos === 'function') {
         let selectGraf = document.getElementById('select_grafico_lote');
         if(selectGraf) {
-            if (ultimoLoteTrabajado) {
-                selectGraf.value = ultimoLoteTrabajado; 
-            } else if (selectGraf.options.length > 1) {
-                selectGraf.selectedIndex = 1; 
-            }
+            if (ultimoLoteTrabajado) selectGraf.value = ultimoLoteTrabajado; 
+            else if (selectGraf.options.length > 1) selectGraf.selectedIndex = 1; 
             dibujarGraficos(selectGraf.value);
         }
     }
     
-    // Cierra el menú en móviles automáticamente
+    // Cierra el menú en móviles de inmediato
     if (window.innerWidth < 768) {
         let sidebar = document.getElementById('sidebarMenu');
         if(sidebar) sidebar.classList.add('-translate-x-full');
     }
 }
 
-// Botón "hamburguesa" de teléfonos móviles
 function toggleMenu() {
     let sidebar = document.getElementById('sidebarMenu');
     if(sidebar) sidebar.classList.toggle('-translate-x-full');

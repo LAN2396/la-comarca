@@ -1,29 +1,22 @@
-<div id="panel-historial" class="panel-seccion hidden">
-    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
-            <div>
-                <h2 class="text-xl font-bold text-gray-800">Historial de Producción y Consumo</h2>
-                <p class="text-sm text-gray-500">Visualización de registros acumulados</p>
-            </div>
-            <div class="inline-flex rounded-md shadow-sm" role="group">
-                <button onclick="cargarHistorial(7)" id="btn-hist-7" class="px-4 py-2 text-sm font-medium rounded-l-lg border bg-green-600 text-white border-green-600">Últimos 7 días</button>
-                <button onclick="cargarHistorial(30)" id="btn-hist-30" class="px-4 py-2 text-sm font-medium border-t border-b bg-white text-gray-700 border-gray-200 hover:bg-gray-50">Últimos 30 días</button>
-                <button onclick="cargarHistorial(0)" id="btn-hist-0" class="px-4 py-2 text-sm font-medium rounded-r-lg border bg-white text-gray-700 border-gray-200 hover:bg-gray-50">Total Histórico</button>
+<div id="panel-historial" class="panel-seccion hidden w-full mt-2">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden">
+        
+        <div class="bg-comarca-rojo p-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-white">
+            <h2 class="text-sm font-black uppercase tracking-wider ml-1 flex items-center gap-2">
+                <span>📈</span> Registros Acumulados
+            </h2>
+            
+            <div class="inline-flex rounded shadow-sm bg-white" role="group">
+                <button onclick="cargarHistorial(7)" id="btn-hist-7" class="px-4 py-2 text-[11px] font-black uppercase rounded-l border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors">7 Días</button>
+                <button onclick="cargarHistorial(30)" id="btn-hist-30" class="px-4 py-2 text-[11px] font-black uppercase border-t border-b border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors">30 Días</button>
+                <button onclick="cargarHistorial(0)" id="btn-hist-0" class="px-4 py-2 text-[11px] font-black uppercase rounded-r border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition-colors">Histórico</button>
             </div>
         </div>
-        <div class="overflow-x-auto border border-gray-200 rounded-lg max-h-96 overflow-y-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
-                <thead class="bg-gray-100 sticky top-0 shadow-sm">
-                    <tr>
-                        <th class="px-6 py-3 font-semibold text-gray-700">Fecha</th>
-                        <th class="px-6 py-3 font-semibold text-gray-700">Lote</th>
-                        <th class="px-6 py-3 font-semibold text-gray-700 text-right">Huevos Producidos</th>
-                        <th class="px-6 py-3 font-semibold text-gray-700 text-right">Mortalidad</th>
-                        <th class="px-6 py-3 font-semibold text-gray-700 text-right">Alimento (Kg)</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-historial" class="divide-y divide-gray-200 bg-white"></tbody>
-            </table>
+        
+        <!-- CONTENEDOR FLEXIBLE (Adiós a las Tablas y al error de desbordamiento) -->
+        <div id="tabla-historial" class="flex flex-col max-h-[600px] overflow-y-auto bg-gray-50/50">
+            <div class="p-8 text-center text-gray-500 font-bold animate-pulse text-sm">Cargando registros...</div>
         </div>
+
     </div>
 </div>

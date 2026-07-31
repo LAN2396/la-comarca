@@ -7,7 +7,6 @@
     <link rel="icon" type="image/png" href="/static/icono.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="/static/styles.css"> <!-- Opcional: Si luego quieres sacar el <style> -->
     <style>
         .toast-exito { transition: opacity 0.5s ease-in-out; opacity: 1; }
         .panel-seccion { animation: fadeIn 0.3s ease-in-out; }
@@ -36,16 +35,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body class="bg-gray-100 font-sans h-screen overflow-hidden flex fondo-comarca">
+<body class="bg-gray-100 font-sans h-[100dvh] overflow-hidden flex fondo-comarca">
 
     {% include 'login.html' %}
     {% include 'sidebar.html' %}
 
-    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+    <div class="flex-1 flex flex-col h-[100dvh] overflow-hidden">
         
         {% include 'header.html' %}
 
-        <main class="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 pb-28">
             {% include 'panel_usuarios.html' %}
             {% include 'panel_empaque.html' %}
             {% include 'panel_diario.html' %}

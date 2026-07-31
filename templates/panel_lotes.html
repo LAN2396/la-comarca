@@ -1,162 +1,198 @@
-<div id="panel-lotes" class="panel-seccion space-y-6">
-    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-300">
-        <div class="bg-comarca-rojo p-3 flex justify-between items-center text-white">
-            <h2 class="text-sm font-black uppercase tracking-wider">Ficha Técnica del Lote</h2>
+<div id="panel-lotes" class="panel-seccion space-y-4 w-full mt-2">
+    
+    <!-- FICHA TÉCNICA (Ancho Completo) -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-300">
+        <div class="bg-comarca-rojo p-2.5 flex flex-col md:flex-row justify-between md:items-center text-white gap-2">
+            <h2 class="text-xs font-black uppercase tracking-wider ml-1">Lotes en Producción</h2>
             <div class="flex items-center gap-2">
-                <label class="text-xs font-bold text-gray-200">LOTE:</label>
-                <select id="buscador_lote" onchange="consultarResumenLote(this.value)" class="w-48 p-1.5 text-black bg-white rounded font-bold outline-none text-sm cursor-pointer"></select>
+                <label class="text-[9px] font-bold text-gray-200 hidden sm:inline">BUSCAR HISTÓRICO:</label>
+                <select id="buscador_lote" onchange="renderizarFichas(this.value)" class="w-full md:w-56 p-1.5 text-black bg-white rounded font-bold outline-none text-xs cursor-pointer">
+                    <option value="">Cargando base de datos...</option>
+                </select>
             </div>
         </div>
-        
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left whitespace-nowrap">
-                <thead class="bg-comarca-dorado text-black uppercase font-bold text-[10px]">
-                    <tr>
-                        <th class="px-4 py-2 border-r border-yellow-600">Lote / Galpón</th>
-                        <th class="px-4 py-2 border-r border-yellow-600">Fechas Importantes</th>
-                        <th class="px-4 py-2 border-r border-yellow-600">Edad</th>
-                        <th class="px-4 py-2 border-r border-yellow-600">Aves Hoy</th>
-                        <th class="px-4 py-2 border-r border-yellow-600">Desglose Levante (Automático)</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-gray-50">
-                    <tr id="filaDatosLote" class="border-b border-gray-200 text-gray-800">
-                        <td class="px-4 py-3 border-r align-top">
-                            <span id="f_codigo" class="font-black text-lg text-comarca-rojo">--</span><br>
-                            <span id="f_raza" class="text-xs text-gray-500">--</span><br>
-                            <span id="f_galpon" class="text-xs font-bold text-gray-800">--</span>
-                        </td>
-                        <td class="px-4 py-3 border-r align-top text-xs">
-                            <span class="text-gray-500 font-bold">Nacimiento:</span> <span id="f_fnac">--</span><br>
-                            <span class="text-gray-500 font-bold">Ingreso:</span> <span id="f_fing">--</span>
-                        </td>
-                        <td class="px-4 py-3 border-r align-top">
-                            <span id="f_edad" class="font-bold text-base">--</span><br>
-                            <span class="text-[10px] text-gray-400">Faltan <span id="f_faltante">--</span></span>
-                        </td>
-                        <td class="px-4 py-3 border-r align-top">
-                            <span id="f_aves_hoy" class="font-black text-lg">--</span><br>
-                            <span class="text-[10px] text-gray-500">Bajas Totales: </span><span id="f_mortalidad" class="text-red-600 font-bold text-xs">--</span>
-                        </td>
-                        <td class="px-4 py-3 align-top">
-                            <div class="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
-                                <div class="flex justify-between border-b border-gray-200 pb-1">
-                                    <span class="text-gray-500">Valor Aves:</span>
-                                    <span id="f_lev_aves" class="font-bold">--</span>
-                                </div>
-                                <div class="flex justify-between border-b border-gray-200 pb-1">
-                                    <span class="text-gray-500">Alimento:</span>
-                                    <span id="f_lev_ali" class="font-bold">--</span>
-                                </div>
-                                <div class="flex justify-between border-b border-gray-200 pb-1">
-                                    <span class="text-gray-500">Medicina:</span>
-                                    <span id="f_lev_med" class="font-bold">--</span>
-                                </div>
-                                <div class="flex justify-between border-b border-gray-200 pb-1">
-                                    <span class="text-gray-500 text-comarca-rojo font-bold">Inversión:</span>
-                                    <span id="f_lev_total" class="font-black text-comarca-rojo">--</span>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div id="contenedor-fichas-lotes" class="flex flex-col">
+            <div class="p-8 text-center text-gray-500 font-bold animate-pulse text-sm">Cargando la granja...</div>
         </div>
-        <div id="msjErrorLote" class="hidden p-4 text-center text-red-600 font-bold bg-red-50"></div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-comarca-rojo">
-            <h2 class="text-lg font-black text-comarca-rojo mb-4">🐣 Ingresar Nuevo Lote</h2>
-            <form id="formLote" class="space-y-4 text-sm">
-                <input type="text" id="lote_nombre" placeholder="Nombre (Ej: Lote A-2026)" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
+    <!-- BOTONES DE ACCIÓN (Ancho Completo) -->
+    <div class="flex flex-col sm:flex-row gap-3 mt-1">
+        <button onclick="toggleFomulariosLote('nuevo')" class="flex-1 bg-white text-comarca-rojo hover:bg-red-50 font-black p-3 rounded-lg shadow-sm border border-gray-200 transition flex items-center justify-center gap-2 text-xs uppercase tracking-wide">
+            <span class="text-lg leading-none">🐣</span> Registrar Lote
+        </button>
+        <button onclick="toggleFomulariosLote('editar')" class="flex-1 bg-white text-gray-700 hover:bg-gray-50 font-black p-3 rounded-lg shadow-sm border border-gray-200 transition flex items-center justify-center gap-2 text-xs uppercase tracking-wide">
+            <span class="text-lg leading-none">✏️</span> Editar Lote
+        </button>
+        <button onclick="toggleFomulariosLote('gasto')" class="flex-1 bg-white text-emerald-700 hover:bg-emerald-50 font-black p-3 rounded-lg shadow-sm border border-gray-200 transition flex items-center justify-center gap-2 text-xs uppercase tracking-wide">
+            <span class="text-lg leading-none">💸</span> Gasto Levante
+        </button>
+    </div>
+
+    <!-- CONTENEDOR DE FORMULARIOS (Limitado y centrado para que no se vea gigante) -->
+    <div class="max-w-2xl mx-auto w-full">
+        <!-- FORMULARIO NUEVO LOTE -->
+        <div id="contenedor-nuevo-lote" class="hidden bg-white p-5 rounded-lg shadow-md border border-gray-200 border-t-4 border-t-comarca-rojo">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-base font-black text-comarca-rojo">🐣 Ingresar Nuevo Lote</h2>
+                <button onclick="toggleFomulariosLote('cerrar')" class="text-gray-400 hover:text-red-500 font-black text-xl leading-none px-2">&times;</button>
+            </div>
+            <form id="formLote" class="space-y-3 text-sm">
+                <input type="text" id="lote_nombre" placeholder="Nombre (Ej: Lote A-2026)" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold text-gray-800 text-sm" required>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <input list="lista_galpones" id="lote_galpon" placeholder="Escribe o elige un galpón..." class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded text-gray-700" required>
-                        <datalist id="lista_galpones">
-                            <option value="Galpón 1"><option value="Galpón 2"><option value="Galpón Principal"><option value="Galpón de Levante"></datalist>
+                        <input list="lista_galpones" id="lote_galpon" placeholder="Galpón..." class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded text-gray-800 focus:ring-1 focus:ring-red-800 outline-none font-bold text-sm" required>
+                        <datalist id="lista_galpones"><option value="Galpón 1"><option value="Galpón 2"><option value="Galpón Principal"><option value="Galpón de Levante"></datalist>
                     </div>
                     <div>
-                        <select id="lote_raza" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded text-gray-700" required>
-                            <option value="" disabled selected>Elegir Raza</option>
-                            <option value="Isa Brown">Isa Brown</option>
-                            <option value="Lohmann Brown">Lohmann Brown</option>
-                            <option value="Hy-Line Brown">Hy-Line Brown</option>
-                            <option value="Babcock Brown">Babcock Brown</option>
+                        <select id="lote_raza" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded text-gray-800 focus:ring-1 focus:ring-red-800 outline-none font-bold cursor-pointer text-sm" required>
+                            <option value="" disabled selected>Elegir Raza...</option>
+                            <option value="Isa Brown">Isa Brown</option><option value="Lohmann Brown">Lohmann Brown</option><option value="Hy-Line Brown">Hy-Line Brown</option><option value="Babcock Brown">Babcock Brown</option>
                         </select>
                     </div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 items-end">
+                <div class="grid grid-cols-3 gap-3 items-end">
                     <div class="col-span-2">
-                        <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">CANTIDAD DE AVES</label>
-                        <input type="number" id="lote_inicial" min="1" placeholder="Ej: 500" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Cant. Aves</label>
+                        <input type="number" id="lote_inicial" min="1" placeholder="Ej: 500" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold text-sm" required>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">EDAD INICIAL</label>
-                        <input type="number" id="lote_edad" min="0" placeholder="Ej: 16" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Edad Inic.</label>
+                        <input type="number" id="lote_edad" min="0" placeholder="Ej: 16" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold text-sm" required>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">¿Edad en días o semanas?</label>
+                        <select id="lote_edad_unidad" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold cursor-pointer text-sm" required>
+                            <option value="semanas">Semanas</option><option value="dias">Días</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Fecha de Ingreso</label>
+                        <input type="date" id="lote_fecha" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold text-gray-800 cursor-pointer text-sm" required>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">¿EDAD EN DIAS O SEMANAS?</label>
-                    <select id="lote_edad_unidad" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
-                        <option value="semanas">Semanas (Ej: Polla de 16 semanas)</option>
-                        <option value="dias">Días (Ej: Pollitas de 1 día)</option>
-                    </select>
+                    <label class="block text-[10px] font-black text-comarca-rojo ml-1 mb-0.5 uppercase tracking-wider">$ Costo de adquisición (Las Aves)</label>
+                    <input type="number" step="0.1" min="0" id="lote_costo" placeholder="Monto pagado" class="w-full p-2.5 border-red-300 border bg-red-50 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold text-red-800 text-sm" required>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-comarca-rojo ml-1 mb-1">$ COSTO DE ADQUISICIÓN (LAS AVES)</label>
-                    <input type="number" step="0.01" min="0" id="lote_costo" placeholder="Monto pagado por las pollas" class="w-full p-2.5 border-red-300 border bg-red-50 rounded" required>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">FECHA DE INGRESO</label>
-                    <input type="date" id="lote_fecha" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
-                </div>
-                <button type="submit" class="w-full bg-comarca-rojo text-white font-bold p-3 rounded hover:bg-red-900 shadow">Registrar Lote</button>
+                <button type="submit" class="w-full h-10 bg-comarca-rojo text-white font-black rounded hover:bg-red-900 shadow transition text-sm mt-2">Guardar Nuevo Lote</button>
             </form>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-gray-600">
-            <h2 class="text-lg font-black text-gray-700 mb-4">✏️ Editar Datos Básicos</h2>
-            <div class="flex gap-2 mb-4">
-                <input type="number" id="edit_buscar_id" placeholder="ID del Lote" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded text-sm" required>
-                <button type="button" onclick="buscarLoteParaEditar()" class="bg-gray-700 text-white font-bold px-4 rounded hover:bg-gray-800 text-sm">Buscar</button>
+        <!-- FORMULARIO EDITAR LOTE -->
+        <div id="contenedor-editar-lote" class="hidden bg-white p-5 rounded-lg shadow-md border border-gray-200 border-t-4 border-t-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-base font-black text-gray-800">✏️ Editar Datos Básicos</h2>
+                <button onclick="toggleFomulariosLote('cerrar')" class="text-gray-400 hover:text-gray-600 font-black text-xl leading-none px-2">&times;</button>
             </div>
-            
-            <form id="formEditarLote" class="space-y-4 text-sm hidden">
+            <div class="flex flex-col sm:flex-row gap-2 mb-4 bg-gray-50 p-2.5 rounded border border-gray-200">
+                <select id="edit_buscar_id" class="w-full p-2 bg-white border border-gray-300 rounded text-xs font-bold focus:ring-1 focus:ring-gray-700 outline-none cursor-pointer" required>
+                    <option value="" disabled selected>Despliega y elige el lote...</option>
+                </select>
+                <button type="button" onclick="buscarLoteParaEditar()" class="w-full sm:w-auto bg-gray-800 text-white font-bold px-4 py-2 rounded hover:bg-black text-xs shadow transition">Cargar</button>
+            </div>
+            <form id="formEditarLote" class="space-y-3 text-sm hidden">
                 <input type="hidden" id="edit_lote_id">
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">NOMBRE DEL LOTE</label>
-                    <input type="text" id="edit_lote_nombre" class="w-full p-2.5 bg-white border border-gray-300 rounded" required>
+                    <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Nombre del Lote</label>
+                    <input type="text" id="edit_lote_nombre" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-gray-700 outline-none font-bold text-sm" required>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">GALPÓN</label>
-                        <input type="text" id="edit_lote_galpon" class="w-full p-2.5 bg-white border border-gray-300 rounded text-gray-700" required>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Galpón</label>
+                        <input type="text" id="edit_lote_galpon" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded text-gray-800 focus:ring-1 focus:ring-gray-700 outline-none font-bold text-sm" required>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">RAZA</label>
-                        <input type="text" id="edit_lote_raza" class="w-full p-2.5 bg-white border border-gray-300 rounded text-gray-700" required>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Raza</label>
+                        <input type="text" id="edit_lote_raza" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded text-gray-800 focus:ring-1 focus:ring-gray-700 outline-none font-bold text-sm" required>
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-2 items-end">
                     <div class="col-span-2">
-                        <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">FECHA INGRESO</label>
-                        <input type="date" id="edit_lote_fecha" class="w-full p-2.5 bg-white border border-gray-300 rounded" required>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Fecha Ingreso</label>
+                        <input type="date" id="edit_lote_fecha" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-gray-700 outline-none font-bold text-sm" required>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">EDAD INIC.</label>
-                        <input type="number" id="edit_lote_edad" min="0" class="w-full p-2.5 bg-white border border-gray-300 rounded" required>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Edad Inic.</label>
+                        <input type="number" id="edit_lote_edad" min="0" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-gray-700 outline-none font-bold text-sm" required>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">UNIDAD</label>
-                    <select id="edit_lote_edad_unidad" class="w-full p-2.5 bg-white border border-gray-300 rounded" required>
-                        <option value="semanas">Semanas</option>
-                        <option value="dias">Días</option>
+                    <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Unidad</label>
+                    <select id="edit_lote_edad_unidad" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-gray-700 outline-none font-bold cursor-pointer text-sm" required>
+                        <option value="semanas">Semanas</option><option value="dias">Días</option>
                     </select>
                 </div>
-                <button type="submit" class="w-full bg-gray-700 text-white font-bold p-3 rounded hover:bg-gray-900 shadow">Guardar Corrección</button>
+                <button type="submit" class="w-full h-10 bg-gray-800 text-white font-black rounded hover:bg-black shadow transition text-sm mt-1">Guardar Corrección</button>
+            </form>
+        </div>
+
+        <!-- FORMULARIO GASTO LE কমপক্ষে -->
+        <div id="contenedor-gasto-levante" class="hidden bg-white p-5 rounded-lg shadow-md border border-gray-200 border-t-4 border-t-emerald-500">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-base font-black text-emerald-700">💸 Registrar Gasto de Levante</h2>
+                <button onclick="toggleFomulariosLote('cerrar')" class="text-gray-400 hover:text-emerald-600 font-black text-xl leading-none px-2">&times;</button>
+            </div>
+            
+            <form id="formGastoLevante" class="space-y-3 text-sm">
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Lote Destino</label>
+                    <select id="gasto_levante_lote" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-emerald-600 outline-none font-bold cursor-pointer text-sm" required></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Categoría del Gasto</label>
+                    <select id="gasto_levante_tipo" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-emerald-600 outline-none font-bold cursor-pointer text-sm" required>
+                        <option value="" disabled selected>Selecciona una categoría...</option>
+                        <option value="Alimento">Alimento</option>
+                        <option value="Medicina y Vitaminas">Medicina y Vitaminas</option>
+                        <option value="Salarios">Salarios (Obreros)</option>
+                        <option value="Higiene">Higiene y Limpieza</option>
+                        <option value="Otros Gastos">Otros Gastos</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Descripción</label>
+                    <input type="text" id="gasto_levante_concepto" placeholder="Detalle..." class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-emerald-600 outline-none font-bold text-sm" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Monto ($)</label>
+                        <input type="number" step="0.1" min="0" id="gasto_levante_monto" placeholder="0.00" class="w-full p-2.5 bg-emerald-50 border border-emerald-300 rounded focus:ring-1 focus:ring-emerald-600 outline-none font-bold text-emerald-800 text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Fecha</label>
+                        <input type="date" id="gasto_levante_fecha" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-emerald-600 outline-none font-bold cursor-pointer text-sm" required>
+                    </div>
+                </div>
+                <button type="submit" class="w-full h-10 bg-emerald-600 text-white font-black rounded hover:bg-emerald-800 shadow transition text-sm mt-1">Sumar a la Ficha</button>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    function toggleFomulariosLote(accion) {
+        const fNuevo = document.getElementById('contenedor-nuevo-lote');
+        const fEditar = document.getElementById('contenedor-editar-lote');
+        const fGasto = document.getElementById('contenedor-gasto-levante');
+        
+        fNuevo.classList.add('hidden');
+        fEditar.classList.add('hidden');
+        fGasto.classList.add('hidden');
+
+        if (accion === 'nuevo') {
+            fNuevo.classList.remove('hidden');
+            fNuevo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (accion === 'editar') {
+            fEditar.classList.remove('hidden');
+            fEditar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (accion === 'gasto') {
+            fGasto.classList.remove('hidden');
+            fGasto.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            document.getElementById('panel-lotes').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+</script>

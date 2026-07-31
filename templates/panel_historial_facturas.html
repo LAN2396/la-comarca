@@ -1,70 +1,72 @@
-<div id="panel-historial-facturas" class="panel-seccion hidden space-y-4">
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        
-        <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4">
+<div id="panel-historial-facturas" class="panel-seccion hidden space-y-5 w-full mt-2">
+    
+    <div class="bg-white rounded-xl shadow-sm p-4 sm:p-5 border border-red-50 border-t-4 border-t-comarca-rojo">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-                <h2 class="text-lg font-black text-gray-800">📂 Historial de Facturas Emitidas</h2>
-                <p class="text-sm text-gray-500">Consulta tus ventas y filtra resultados. Las deudas (Crédito) salen en rojo.</p>
+                <label class="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Buscar Cliente o N°</label>
+                <input type="text" id="filtro_fact_cliente" oninput="filtrarFacturas()" placeholder="Ej: CF-0009" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-red-900">
             </div>
-            
-            <div class="flex flex-col md:flex-row gap-2 items-center w-full bg-gray-50 p-2 rounded-lg border border-gray-200 shadow-inner flex-wrap">
-                <input type="text" id="filtro_fact_cliente" oninput="filtrarFacturas()" placeholder="Buscar cliente o Nº..." class="p-2 border border-gray-300 rounded text-sm w-full md:flex-1 outline-none font-bold">
-                
-                <select id="filtro_fact_condicion" onchange="filtrarFacturas()" class="p-2 border rounded-lg text-sm font-bold bg-white focus:ring-2 focus:ring-blue-500">
-                    <option value="Todas">Todos los métodos</option>
-                    <option value="Efectivo">Efectivo / Zelle</option>
-                    <option value="Crédito">Crédito</option>
-                    <option value="Pago Móvil">Pago Móvil</option>
-                    <option value="Transferencia">Transferencia</option>
+            <div>
+                <label class="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Estado / Método</label>
+                <select id="filtro_fact_condicion" onchange="filtrarFacturas()" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-red-900 cursor-pointer">
+                    <option value="todas">Todas las facturas</option>
+                    <option value="efectivo">💵 Efectivo</option>
+                    <option value="transferencia">🏦 Transf. / Zelle</option>
+                    <option value="pago movil">📱 Pago Móvil</option>
+                    <option value="credito">⚠️ Crédito (Deuda)</option>
                 </select>
-
-                <select id="filtro_fact_fecha" onchange="cambiarFiltroFechaPOS()" class="p-2 border border-gray-300 rounded text-sm font-bold text-emerald-700 w-full md:w-auto outline-none cursor-pointer">
-                    <option value="Todas">Todas las Fechas</option>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-gray-500 uppercase mb-1 ml-1">Filtro de Fecha</label>
+                <select id="filtro_fact_fecha" onchange="cambiarFiltroFechaPOS()" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-red-900 cursor-pointer">
+                    <option value="Todas">Todas las fechas</option>
                     <option value="Hoy">Solo Hoy</option>
                     <option value="Semana">Últimos 7 días</option>
                     <option value="Mes">Este Mes</option>
-                    <option value="Personalizado">Elegir Rango...</option>
+                    <option value="Personalizado">Rango...</option>
                 </select>
-
-                <div id="rango_fechas_pos" class="hidden flex gap-2 w-full md:w-auto mt-2 md:mt-0 items-center bg-white p-1 rounded border border-gray-300">
-                    <input type="date" id="filtro_fecha_desde" onchange="filtrarFacturas()" class="p-1 border-none bg-transparent text-sm font-bold text-gray-700 w-full outline-none cursor-pointer">
-                    <span class="text-gray-400 font-bold px-1">a</span>
-                    <input type="date" id="filtro_fecha_hasta" onchange="filtrarFacturas()" class="p-1 border-none bg-transparent text-sm font-bold text-gray-700 w-full outline-none cursor-pointer">
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm">
-                <h3 class="text-[11px] font-black text-gray-500 uppercase tracking-wider mb-1">Total Facturado (Filtro Actual)</h3>
-                <p id="lbl_fact_total" class="text-3xl font-black text-gray-800 font-mono">$0.00</p>
-            </div>
-            <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
-                <h3 class="text-[11px] font-black text-emerald-700 uppercase tracking-wider mb-1">Total Cobrado (Efec/Transf)</h3>
-                <p id="lbl_fact_cobrado" class="text-3xl font-black text-emerald-700 font-mono">$0.00</p>
-            </div>
-            <div class="bg-red-50 p-4 rounded-xl border border-red-200 shadow-sm">
-                <h3 class="text-[11px] font-black text-red-700 uppercase tracking-wider mb-1">Dinero por Cobrar (Crédito)</h3>
-                <p id="lbl_fact_credito" class="text-3xl font-black text-red-700 font-mono">$0.00</p>
             </div>
         </div>
         
-        <div class="overflow-x-auto border border-gray-200 rounded-lg max-h-[400px] overflow-y-auto shadow-inner">
-            <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
-                <thead class="bg-gray-100 sticky top-0 shadow-sm z-10">
-                    <tr>
-                        <th class="px-3 py-3 font-semibold text-gray-700">Nº Factura</th>
-                        <th class="px-3 py-3 font-semibold text-gray-700">Cliente</th>
-                        <th class="px-3 py-3 font-semibold text-gray-700 text-center">Estado</th>
-                        <th class="px-3 py-3 font-semibold text-gray-700 text-center">Método Pago</th>
-                        <th class="px-3 py-3 font-semibold text-gray-700 text-right">Total Fra.</th>
-                        <th class="px-3 py-3 font-semibold text-gray-700 text-right">Deuda</th>
-                        <th class="px-3 py-3 font-semibold text-gray-700 text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-historial-facturas" class="divide-y divide-gray-200 bg-white">
-                    </tbody>
-            </table>
+        <div id="rango_fechas_pos" class="hidden mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-red-50 p-4 rounded-lg border border-red-100 shadow-inner">
+            <div>
+                <label class="block text-[10px] font-black text-comarca-rojo uppercase mb-1 ml-1">Desde</label>
+                <input type="date" id="filtro_fecha_desde" onchange="filtrarFacturas()" class="w-full p-2 bg-white border border-red-200 rounded-lg text-sm font-bold outline-none focus:ring-1 focus:ring-red-900">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-comarca-rojo uppercase mb-1 ml-1">Hasta</label>
+                <input type="date" id="filtro_fecha_hasta" onchange="filtrarFacturas()" class="w-full p-2 bg-white border border-red-200 rounded-lg text-sm font-bold outline-none focus:ring-1 focus:ring-red-900">
+            </div>
+        </div>
+    </div>
+
+    <!-- TARJETAS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-gray-800">
+            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Total Facturado</p>
+            <p id="lbl_fact_total" class="text-2xl font-black font-mono text-gray-800 break-words">$0.00</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-emerald-500">
+            <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Efectivo</p>
+            <p id="lbl_fact_efectivo" class="text-2xl font-black font-mono text-emerald-600 break-words">$0.00</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-blue-500">
+            <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Bancos</p>
+            <p id="lbl_fact_bancos" class="text-2xl font-black font-mono text-blue-600 break-words">$0.00</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-comarca-rojo">
+            <p class="text-[10px] font-black text-comarca-rojo uppercase tracking-widest mb-1">Por Cobrar</p>
+            <p id="lbl_fact_credito" class="text-2xl font-black font-mono text-comarca-rojo break-words">$0.00</p>
+        </div>
+    </div>
+
+    <!-- LISTA DE FACTURAS -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-comarca-dorado p-3 flex justify-between items-center text-black">
+            <h2 class="text-sm font-black uppercase tracking-widest flex items-center gap-2"><span>📋</span> Detalle de Registros</h2>
+        </div>
+        <div id="tabla-historial-facturas" class="flex flex-col divide-y divide-gray-200 bg-gray-50/50">
+            <div class="p-6 text-center text-gray-400 font-bold italic text-sm">Cargando facturas...</div>
         </div>
     </div>
 </div>

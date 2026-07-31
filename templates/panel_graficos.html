@@ -1,21 +1,19 @@
-<div id="panel-graficos" class="panel-seccion hidden">
-    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b pb-4">
-            <div>
-                <h2 class="text-xl font-black text-gray-800">Rendimiento y Consumo</h2>
-                <p class="text-sm text-gray-500">Curvas de postura vs. ingesta de alimento</p>
-            </div>
-            <div>
-                <select id="select_grafico_lote" onchange="dibujarGraficos(this.value)" class="p-2 border-2 border-comarca-rojo rounded-lg font-bold text-gray-700 bg-red-50 outline-none"></select>
-            </div>
+<div id="panel-graficos" class="panel-seccion hidden w-full mt-2">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden">
+        
+        <div class="bg-comarca-rojo p-3 flex flex-col md:flex-row justify-between items-center text-white gap-3">
+            <h2 class="text-xs font-black uppercase tracking-wider ml-1">Rendimiento y Consumo</h2>
+            <select id="select_grafico_lote" onchange="dibujarGraficos(this.value)" class="w-full md:w-64 h-8 px-2 bg-white text-black border-none rounded font-bold outline-none text-xs cursor-pointer"></select>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 shadow-inner">
+        
+        <div class="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4 bg-gray-50/50">
+            <div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
                 <canvas id="chartPostura"></canvas>
             </div>
-            <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 shadow-inner">
+            <div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
                 <canvas id="chartAlimento"></canvas>
             </div>
         </div>
+        
     </div>
 </div>

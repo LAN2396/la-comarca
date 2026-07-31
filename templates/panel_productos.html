@@ -1,68 +1,82 @@
-<div id="panel-productos" class="panel-seccion hidden space-y-6">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-1">
-            <h2 id="titulo-form-producto" class="text-base font-bold text-comarca-rojo mb-4 flex items-center gap-2">📦 Registrar Nuevo Producto</h2>
-            <form id="formProducto" class="space-y-4 text-sm">
+<div id="panel-productos" class="panel-seccion space-y-4 w-full mt-2">
+    
+    <div class="flex">
+        <button onclick="toggleFormularioProducto('nuevo')" class="w-full sm:w-auto bg-white text-comarca-rojo hover:bg-red-50 font-black p-3 px-5 rounded-lg shadow-sm border border-gray-200 transition flex items-center justify-center gap-2 text-xs uppercase tracking-wide">
+            <span class="text-lg leading-none">📦</span> Registrar Nuevo Producto
+        </button>
+    </div>
+
+    <!-- FORMULARIO CENTRADO Y LIMITADO EN ANCHO -->
+    <div class="max-w-2xl mx-auto w-full">
+        <div id="contenedor-nuevo-producto" class="hidden bg-white p-5 rounded-lg shadow-md border border-gray-200 border-t-4 border-t-comarca-rojo">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="titulo-form-producto" class="text-base font-black text-comarca-rojo">📦 Registrar Nuevo Producto</h2>
+                <button onclick="toggleFormularioProducto('cerrar')" class="text-gray-400 hover:text-red-500 font-black text-xl leading-none px-2">&times;</button>
+            </div>
+            
+            <form id="formProducto" class="space-y-3 text-sm">
                 <input type="hidden" id="prod_id">
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">CÓDIGO IDENTIFICADOR</label>
-                    <input type="text" id="prod_codigo" placeholder="Ej: PRD-001, HUE-A, ALI-INI" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded font-mono uppercase font-bold shadow-inner" required>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">NOMBRE DEL PRODUCTO</label>
-                    <input type="text" id="prod_nombre" placeholder="Nombre descriptivo" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded" required>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">DESCRIPCIÓN (OPCIONAL)</label>
-                    <textarea id="prod_descripcion" placeholder="Notas adicionales..." class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded h-16 resize-none"></textarea>
-                </div>
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">PRECIO X CARTÓN ($)</label>
-                        <input type="number" step="0.01" min="0" id="prod_precio_carton" placeholder="0.00" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded font-bold text-emerald-700" required>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Código (Ej. H-AAA)</label>
+                        <input type="text" id="prod_codigo" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold uppercase text-sm" required>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">PRECIO X CAJA (12 Cartones) ($)</label>
-                        <input type="number" step="0.01" min="0" id="prod_precio_caja" placeholder="0.00" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded font-bold text-blue-700" required>
+                        <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Nombre del Producto</label>
+                        <input type="text" id="prod_nombre" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold text-sm" required>
                     </div>
                 </div>
-                
+
                 <div>
-                    <label id="lbl_prod_stock" class="block text-[10px] font-bold text-gray-500 ml-1 mb-1">CARTONES DISPONIBLES (STOCK INICIAL)</label>
-                    <input type="hidden" id="prod_stock_actual" value="0">
-                    <input type="number" step="0.5" min="0" id="prod_stock" placeholder="Ej: 10" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded font-bold" required>
+                    <label class="block text-[10px] font-black text-gray-500 ml-1 mb-0.5 uppercase tracking-wider">Descripción (Opcional)</label>
+                    <input type="text" id="prod_descripcion" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold text-sm">
                 </div>
 
-                <div class="flex gap-2 pt-2">
-                    <button type="submit" id="btn-guardar-producto" class="flex-1 bg-comarca-rojo text-white font-bold p-3 rounded hover:bg-red-900 transition shadow">Guardar Producto</button>
-                    <button type="button" id="btn-cancelar-producto" onclick="limpiarFormProducto()" class="hidden bg-gray-500 text-white font-bold p-3 rounded hover:bg-gray-600 transition shadow">Cancelar</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-black text-comarca-rojo ml-1 mb-0.5 uppercase tracking-wider">Precio por Cartón ($)</label>
+                        <input type="number" step="0.01" id="prod_precio_carton" class="w-full p-2.5 border border-red-300 bg-red-50 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold text-red-800 text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-yellow-600 ml-1 mb-0.5 uppercase tracking-wider">Precio por Caja ($)</label>
+                        <input type="number" step="0.01" id="prod_precio_caja" class="w-full p-2.5 border border-yellow-300 bg-yellow-50 rounded focus:ring-1 focus:ring-yellow-600 outline-none font-bold text-yellow-800 text-sm" required>
+                    </div>
+                </div>
+
+                <div class="bg-gray-100 p-3 rounded border border-gray-200 mt-1">
+                    <label id="lbl_prod_stock" class="block text-[10px] font-black text-gray-500 mb-1 uppercase tracking-wider">CARTONES DISPONIBLES (STOCK)</label>
+                    <input type="hidden" id="prod_stock_actual" value="0">
+                    <input type="number" step="0.1" id="prod_stock" value="0" class="w-full p-2.5 bg-white border border-gray-300 rounded focus:ring-1 focus:ring-red-800 outline-none font-bold text-base" required>
+                </div>
+
+                <div class="flex gap-2 pt-1">
+                    <button type="submit" id="btn-guardar-producto" class="w-full h-10 bg-comarca-rojo text-white font-black rounded hover:bg-red-900 shadow-sm transition text-sm">Guardar Producto</button>
+                    <button type="button" id="btn-cancelar-producto" onclick="limpiarFormProducto(); toggleFormularioProducto('cerrar')" class="hidden w-1/3 h-10 bg-gray-200 text-gray-700 font-black rounded hover:bg-gray-300 transition text-sm">Cancelar</button>
                 </div>
             </form>
         </div>
+    </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2 flex flex-col">
-            <div class="mb-4">
-                <h2 class="text-base font-bold text-gray-800">Inventario y Lista de Productos</h2>
-                <p class="text-xs text-gray-500">Consulta los insumos o productos finales registrados en La Comarca.</p>
-            </div>
-            <div class="overflow-x-auto border border-gray-200 rounded-lg flex-1 max-h-[480px] overflow-y-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
-                    <thead class="bg-gray-100 sticky top-0 shadow-sm z-10">
-                        <tr>
-                            <th class="px-4 py-3 font-semibold text-gray-700">Código</th>
-                            <th class="px-4 py-3 font-semibold text-gray-700">Nombre / Categoría</th>
-                            <th class="px-4 py-3 font-semibold text-gray-700 text-right">Precio</th>
-                            <th class="px-4 py-3 font-semibold text-gray-700 text-right">Stock</th>
-                            <th class="px-4 py-3 font-semibold text-gray-700 text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-productos" class="divide-y divide-gray-200 bg-white">
-                        <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-gray-400 italic">Cargando inventario...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+    <!-- TABLA / CATÁLOGO (Ancho Completo) -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-300">
+        <div class="bg-comarca-rojo p-2.5 flex justify-between items-center text-white">
+            <h2 class="text-xs font-black uppercase tracking-wider ml-1">Inventario y Lista de Productos</h2>
+        </div>
+        <div id="contenedor-productos-grid" class="flex flex-col">
+            <div class="p-8 text-center text-gray-500 font-bold animate-pulse text-sm">Cargando inventario...</div>
         </div>
     </div>
 </div>
+
+<script>
+    function toggleFormularioProducto(accion) {
+        const form = document.getElementById('contenedor-nuevo-producto');
+        if (accion === 'nuevo' || accion === 'abrir') {
+            form.classList.remove('hidden');
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            form.classList.add('hidden');
+        }
+    }
+</script>

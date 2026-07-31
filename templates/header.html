@@ -1,16 +1,18 @@
-<header class="bg-white shadow-sm border-b border-gray-200 p-4 flex justify-between items-center z-10 flex-shrink-0 gap-2">
-    <div class="flex items-center gap-3">
+<header class="bg-white shadow-sm border-b border-gray-200 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between z-10 flex-shrink-0 gap-3 w-full">
+    
+    <div class="flex items-center gap-3 w-full sm:w-auto">
         <button onclick="toggleMenu()" class="md:hidden bg-gray-100 p-1.5 rounded text-gray-800 font-bold hover:bg-gray-200 shadow-sm">
             ☰
         </button>
-        <h2 id="titulo-seccion" class="text-xl font-bold text-gray-800 truncate">Ficha Técnica del Lote</h2>
+        <h2 id="titulo-seccion" class="text-lg md:text-xl font-bold text-gray-800 leading-tight">Ficha Técnica del Lote</h2>
     </div>
     
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-3 self-start sm:self-auto">
         <div class="flex items-center gap-2 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-md shadow-sm" title="Tasa extraída de bcv.org.ve">
             <span class="text-xs font-black text-blue-800 hidden sm:inline">🇻🇪 Tasa BCV:</span>
             <span id="tasa-bcv-display" class="text-sm font-mono font-black text-blue-700">Calculando...</span>
             <button type="button" onclick="extraerTasaBCV()" class="text-xs bg-blue-200 hover:bg-blue-300 text-blue-800 px-1.5 py-0.5 rounded transition">↻</button>
         </div>
     </div>
+
 </header>

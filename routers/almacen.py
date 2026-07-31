@@ -4,30 +4,40 @@ from datetime import date
 import models, schemas
 from database import obtener_db
 
+# Aquí está el prefijo que le dice a todas las rutas que empiecen por /almacen
 router = APIRouter(prefix="/almacen", tags=["Almacén e Insumos"])
 
 @router.get("/insumos")
 def listar_insumos(db: Session = Depends(obtener_db)):
     return db.query(models.InsumoDB).all()
 
+# CORRECCIÓN 1: Usamos InsumoSchema (que ya tiene el ultimo_precio)
 @router.post("/insumos/crear")
-def crear_insumo(insumo: schemas.ModeloInsumo, db: Session = Depends(obtener_db)):
+def crear_insumo(insumo: schemas.InsumoSchema, db: Session = Depends(obtener_db)):
     nuevo_insumo = models.InsumoDB(
         nombre=insumo.nombre,
         categoria=insumo.categoria,
         unidad_medida=insumo.unidad_medida,
-        stock_actual=insumo.stock_actual
+        stock_actual=insumo.stock_actual,
+        ultimo_precio=insumo.ultimo_precio
     )
     db.add(nuevo_insumo)
     db.commit()
     return {"mensaje": f"¡Insumo '{insumo.nombre}' registrado en el almacén!"}
 
+# CORRECCIÓN 2: Actualizamos esta función para que calcule el precio pagado
 @router.post("/comprar")
 def comprar_insumo(compra: schemas.ModeloCompraInsumo, db: Session = Depends(obtener_db)):
     insumo = db.query(models.InsumoDB).filter(models.InsumoDB.id == compra.insumo_id).first()
     if not insumo:
         raise HTTPException(status_code=404, detail="Insumo no encontrado.")
     
+    # --- MATEMÁTICA DEL NUEVO PRECIO ---
+    if compra.cantidad_comprada > 0:
+        precio_unitario = compra.costo_total / compra.cantidad_comprada
+        insumo.ultimo_precio = round(precio_unitario, 2)
+    # ------------------------------------
+
     cantidad_a_sumar = compra.cantidad_comprada
     if compra.es_saco and insumo.unidad_medida == "Kg":
         cantidad_a_sumar = compra.cantidad_comprada * 40
@@ -52,7 +62,7 @@ def comprar_insumo(compra: schemas.ModeloCompraInsumo, db: Session = Depends(obt
         db.add(gasto)
     
     db.commit()
-    return {"mensaje": f"¡Compra registrada! Se sumaron {cantidad_a_sumar} {insumo.unidad_medida} y se registró el egreso."}
+    return {"mensaje": f"¡Compra registrada y precio de {insumo.nombre} actualizado!"}
 
 @router.post("/ajustar")
 def ajustar_insumo(ajuste: schemas.ModeloAjusteInsumo, db: Session = Depends(obtener_db)):
@@ -74,3 +84,19 @@ def eliminar_insumo(insumo_id: int, db: Session = Depends(obtener_db)):
         db.delete(insumo)
         db.commit()
     return {"mensaje": "Eliminado"}
+
+# CORRECCIÓN 3: Le quitamos el "/almacen" al texto porque el prefijo arriba ya lo pone.
+@router.post("/insumos/editar")
+def editar_insumo(datos: schemas.InsumoEditSchema, db: Session = Depends(obtener_db)):
+    insumo = db.query(models.InsumoDB).filter(models.InsumoDB.id == datos.id).first()
+    if not insumo:
+        raise HTTPException(status_code=404, detail="Insumo no encontrado")
+    
+    insumo.nombre = datos.nombre
+    insumo.categoria = datos.categoria
+    insumo.unidad_medida = datos.unidad_medida
+    insumo.stock_actual = datos.stock_actual
+    insumo.ultimo_precio = datos.ultimo_precio
+    
+    db.commit()
+    return {"mensaje": "¡Insumo actualizado correctamente!"}
