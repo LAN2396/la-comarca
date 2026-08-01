@@ -72,81 +72,77 @@ def home(request: Request):
 @app.get("/forzar-cuadre")
 def forzar_cuadre_caja():
     try:
-        # 👇 TUS NÚMEROS REALES Y EXACTOS 👇
         TASA_ACTUAL = 746.63
         OBJETIVO_BANCO_USD = -24.50
         OBJETIVO_BANCO_BS = OBJETIVO_BANCO_USD * TASA_ACTUAL
         
-        # Abrimos la conexión manualmente
         with Session(engine) as db:
-            # 1. Leer saldos actuales
-            res = db.execute(text("SELECT tipo, moneda, monto, monto_ves FROM transacciones")).fetchall()
+            # 1. Leemos los ingresos reales de la tabla 'ventas'
+            ventas = db.execute(text("SELECT moneda, total_ingreso, monto_ves FROM ventas")).fetchall()
+            # 2. Leemos los gastos reales de la tabla 'gastos'
+            gastos = db.execute(text("SELECT moneda, total_gasto, monto_ves FROM gastos")).fetchall()
+            
             caja_sistema = 0.0
             banco_sistema_bs = 0.0
             
-            for fila in res:
-                tipo, moneda = fila[0], fila[1]
-                monto, monto_ves = float(fila[2] or 0), float(fila[3] or 0)
-                
+            # Sumamos las ventas (Ingresos en Efectivo USD o Banco VES)
+            for v in ventas:
+                moneda, monto, monto_ves = v[0], float(v[1] or 0), float(v[2] or 0)
                 if moneda == "VES":
-                    if tipo == "Ingreso": banco_sistema_bs += monto_ves
-                    else: banco_sistema_bs -= monto_ves
+                    banco_sistema_bs += monto_ves
                 else:
-                    if tipo == "Ingreso": caja_sistema += monto
-                    else: caja_sistema -= monto
+                    caja_sistema += monto
+                    
+            # Restamos los gastos (Egresos de Efectivo USD o Banco VES)
+            for g in gastos:
+                moneda, monto, monto_ves = g[0], float(g[1] or 0), float(g[2] or 0)
+                if moneda == "VES":
+                    banco_sistema_bs -= monto_ves
+                else:
+                    caja_sistema -= monto
                     
             from datetime import date
             hoy = date.today().strftime("%Y-%m-%d")
             
-            # 2. Vaciar el Efectivo (Simulando un depósito al banco)
+            # 3. Si hay efectivo acumulado, simulamos el depósito al banco para dejarlo en 0.00
             if caja_sistema > 0.01:
+                # Registramos el egreso de efectivo
                 db.execute(text("""
-                    INSERT INTO transacciones (fecha, tipo, concepto, monto, categoria, moneda, tasa_cambio, monto_ves)
-                    VALUES (:f, 'Egreso', 'Depósito en Banco (Cierre de Efectivo)', :m, 'Transferencia', 'USD', 1.0, 0.0)
-                """), {"f": hoy, "m": round(caja_sistema, 2)})
+                    INSERT INTO gastos (lote_id, concepto, total_gasto, fecha, categoria, moneda, tasa_cambio, monto_ves)
+                    VALUES (NULL, 'Depósito en Banco (Cierre de Efectivo)', :m, :f, 'Operativo', 'USD', 1.0, 0.0)
+                """), {"m": round(caja_sistema, 2), "f": hoy})
                 
+                # Registramos el ingreso al banco en Bs
                 ingreso_banco_bs = caja_sistema * TASA_ACTUAL
                 db.execute(text("""
-                    INSERT INTO transacciones (fecha, tipo, concepto, monto, categoria, moneda, tasa_cambio, monto_ves)
-                    VALUES (:f, 'Ingreso', 'Recepción de Efectivo en Banco', :m, 'Transferencia', 'VES', :tc, :mves)
-                """), {"f": hoy, "m": round(caja_sistema, 2), "tc": TASA_ACTUAL, "mves": round(ingreso_banco_bs, 2)})
+                    INSERT INTO ventas (lote_id, concepto, cantidad_cartones, precio_unitario, total_ingreso, fecha, moneda, tasa_cambio, monto_ves)
+                    VALUES (NULL, 'Recepción de Efectivo en Banco', 0, 0, :m, :f, 'VES', :tc, :mves)
+                """), {"m": round(caja_sistema, 2), "f": hoy, "tc": TASA_ACTUAL, "mves": round(ingreso_banco_bs, 2)})
                 
                 banco_sistema_bs += ingreso_banco_bs
                 
-            # 3. Calcular y registrar la Pérdida Cambiaria exacta
+            # 4. Calculamos la diferencia exacta para registrar la Pérdida por Diferencial Cambiario
             diferencia_bs = OBJETIVO_BANCO_BS - banco_sistema_bs
             
             if diferencia_bs < -0.01:
                 perdida_bs = abs(diferencia_bs)
                 perdida_usd = perdida_bs / TASA_ACTUAL
+                # Inyectamos la pérdida cambiaria formalmente como un gasto operativo
                 db.execute(text("""
-                    INSERT INTO transacciones (fecha, tipo, concepto, monto, categoria, moneda, tasa_cambio, monto_ves)
-                    VALUES (:f, 'Egreso', 'Pérdida por Diferencial Cambiario', :m, 'Pérdida Cambiaria', 'VES', :tc, :mves)
-                """), {"f": hoy, "m": round(perdida_usd, 2), "tc": TASA_ACTUAL, "mves": round(perdida_bs, 2)})
-                
-            elif diferencia_bs > 0.01:
-                ganancia_bs = diferencia_bs
-                ganancia_usd = ganancia_bs / TASA_ACTUAL
-                db.execute(text("""
-                    INSERT INTO transacciones (fecha, tipo, concepto, monto, categoria, moneda, tasa_cambio, monto_ves)
-                    VALUES (:f, 'Ingreso', 'Ganancia por Diferencial Cambiario', :m, 'Ganancia Cambiaria', 'VES', :tc, :mves)
-                """), {"f": hoy, "m": round(ganancia_usd, 2), "tc": TASA_ACTUAL, "mves": round(ganancia_bs, 2)})
+                    INSERT INTO gastos (lote_id, concepto, total_gasto, fecha, categoria, moneda, tasa_cambio, monto_ves)
+                    VALUES (NULL, 'Pérdida por Diferencial Cambiario y Devaluación', :m, :f, 'Operativo', 'VES', :tc, :mves)
+                """), {"m": round(perdida_usd, 2), "f": hoy, "tc": TASA_ACTUAL, "mves": round(perdida_bs, 2)})
                 
             db.commit()
             
-        perdida_final = round(abs(diferencia_bs) / TASA_ACTUAL, 2)
-            
         return {
-            "mensaje": "¡Caja cuadrada y devaluación registrada como todo un profesional!",
+            "mensaje": "¡Caja cuadrada a 0 en efectivo, deuda exacta en banco y devaluación registrada!",
             "Efectivo_Final": "$0.00",
-            "Banco_Final": f"Bs {round(OBJETIVO_BANCO_BS, 2)}",
-            "Perdida_Cambiaria_Registrada": f"${perdida_final}"
+            "Banco_Final": f"Bs {round(OBJETIVO_BANCO_BS, 2)}"
         }
         
     except Exception as e:
-        # AQUÍ ESTÁ EL TRUCO: Si falla, nos mostrará el error exacto en pantalla
         return {
             "estado": "Error Encontrado",
-            "motivo_del_fallo": str(e),
-            "instruccion": "Copia este mensaje completo y envíaselo a Gemini."
+            "motivo_del_fallo": str(e)
         }
