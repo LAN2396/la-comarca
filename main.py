@@ -76,7 +76,7 @@ def forzar_cuadre_caja():
         TASA_ACTUAL = 746.63
         
         # Pon aquí los dólares EXACTOS que recibiste en billetes físicos
-        BILLETES_RECIBIDOS = 30.00  
+        BILLETES_RECIBIDOS = 7.00  
         # ==========================================
         
         with Session(engine) as db:
