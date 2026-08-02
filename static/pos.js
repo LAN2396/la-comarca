@@ -356,8 +356,8 @@ function renderizarTablaFacturas(facturas) {
             
             if (esBanco) {
                 tc_bancos += cobrado;
-                // Calculamos los Bolívares usando el registro exacto de la base de datos o la tasa actual
-                tc_bancos_bs += (f.monto_ves && f.monto_ves > 0) ? f.monto_ves : (cobrado * (f.tasa_cambio || TASA_BCV_ACTUAL));
+                // 🔥 SE SUMA ESTRICTAMENTE LO QUE ESTÁ EN LA BASE DE DATOS
+                tc_bancos_bs += f.monto_ves || 0; 
             } else {
                 tc_efectivo += cobrado; 
             }
@@ -409,10 +409,10 @@ function renderizarTablaFacturas(facturas) {
     let lblEfe = document.getElementById('lbl_fact_efectivo');
     if(lblEfe) lblEfe.innerText = formMoneda(tc_efectivo);
     
-    // AQUÍ INYECTAMOS LOS BOLÍVARES EN LA MISMA LÍNEA PARA NO DEFORMAR LA TARJETA
+    // 🔥 ELIMINAMOS EL SÍMBOLO '~' PARA MOSTRAR QUE ES UN DATO REAL
     let lblBan = document.getElementById('lbl_fact_bancos');
     if (lblBan) {
-        lblBan.innerHTML = `${formMoneda(tc_bancos)} <span class="text-sm font-bold text-gray-500 ml-1">~ Bs ${tc_bancos_bs.toLocaleString('es-VE', {minimumFractionDigits: 2})}</span>`;
+        lblBan.innerHTML = `${formMoneda(tc_bancos)} <span class="text-sm font-bold text-gray-500 ml-1">Bs ${tc_bancos_bs.toLocaleString('es-VE', {minimumFractionDigits: 2})}</span>`;
     }
     
     let lblCre = document.getElementById('lbl_fact_credito');

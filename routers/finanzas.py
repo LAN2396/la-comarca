@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from datetime import date
 import datetime
 import requests
@@ -17,23 +18,68 @@ router = APIRouter(tags=["Finanzas y Analítica"])
 
 @router.post("/finanzas/registrar-gasto")
 def registrar_gasto(gasto_nuevo: schemas.ModeloGasto, db: Session = Depends(obtener_db)):
-    lote_seguro = db.query(models.LoteDB).first()
-    lote_valido = lote_seguro.id if lote_seguro else None
-    texto_moneda = f" (Bs {gasto_nuevo.monto_ves:.2f} a Tasa {gasto_nuevo.tasa_cambio})" if gasto_nuevo.moneda == "VES" else ""
-    
-    db_gasto = models.GastoDB(
-        lote_id=lote_valido, 
-        concepto=gasto_nuevo.concepto + texto_moneda, 
-        total_gasto=gasto_nuevo.total_gasto, 
-        fecha=gasto_nuevo.fecha, 
-        categoria=gasto_nuevo.categoria,
-        moneda=gasto_nuevo.moneda,
-        tasa_cambio=gasto_nuevo.tasa_cambio,
-        monto_ves=gasto_nuevo.monto_ves
-    )
-    db.add(db_gasto)
-    db.commit()
-    return {"mensaje": "¡Gasto operativo/administrativo registrado en la caja!"}
+    try:
+        lote_seguro = db.query(models.LoteDB).first()
+        lote_valido = lote_seguro.id if lote_seguro else None
+        texto_moneda = f" (Bs {gasto_nuevo.monto_ves:.2f} a Tasa {gasto_nuevo.tasa_cambio})" if gasto_nuevo.moneda == "VES" else ""
+        
+        perdida_usd = 0.0
+        
+        # 🔥 LÓGICA MATEMÁTICA DE DEVALUACIÓN TRANSACCIONAL
+        if gasto_nuevo.moneda == "VES" and gasto_nuevo.monto_ves > 0:
+            
+            # 1. ¿Cuántos Bolívares hay en el banco históricamente?
+            ventas_bs = db.execute(text("SELECT SUM(monto_ves) FROM ventas WHERE moneda='VES'")).scalar() or 0.0
+            gastos_bs = db.execute(text("SELECT SUM(monto_ves) FROM gastos WHERE moneda='VES'")).scalar() or 0.0
+            saldo_actual_bs = ventas_bs - gastos_bs
+            
+            # 2. ¿Cuánto valía ese dinero en USD cuando entró?
+            ventas_usd = db.execute(text("SELECT SUM(total_ingreso) FROM ventas WHERE moneda='VES'")).scalar() or 0.0
+            gastos_usd = db.execute(text("SELECT SUM(total_gasto) FROM gastos WHERE moneda='VES'")).scalar() or 0.0
+            saldo_historico_usd = ventas_usd - gastos_usd
+            
+            # 3. Cálculo del Costo Promedio Ponderado
+            if saldo_actual_bs > 0 and saldo_historico_usd > 0:
+                tasa_promedio = saldo_actual_bs / saldo_historico_usd
+                
+                # Si la tasa a la que gastas hoy es mayor a tu promedio, perdiste dinero
+                if gasto_nuevo.tasa_cambio > tasa_promedio:
+                    valor_historico_usd = gasto_nuevo.monto_ves / tasa_promedio
+                    perdida_usd = valor_historico_usd - gasto_nuevo.total_gasto
+
+        # 4. Guardamos el GASTO PRINCIPAL normal
+        db_gasto = models.GastoDB(
+            lote_id=lote_valido, 
+            concepto=gasto_nuevo.concepto + texto_moneda, 
+            total_gasto=gasto_nuevo.total_gasto, 
+            fecha=gasto_nuevo.fecha, 
+            categoria=gasto_nuevo.categoria,
+            moneda=gasto_nuevo.moneda,
+            tasa_cambio=gasto_nuevo.tasa_cambio,
+            monto_ves=gasto_nuevo.monto_ves
+        )
+        db.add(db_gasto)
+        
+        # 5. Guardamos el PEDACITO DE PÉRDIDA SILENCIOSAMENTE
+        if perdida_usd > 0.01:
+            db_perdida = models.GastoDB(
+                lote_id=lote_valido,
+                concepto=f"Diferencial Cambiario Transaccional (Tasa {gasto_nuevo.tasa_cambio})",
+                total_gasto=round(perdida_usd, 2),
+                fecha=gasto_nuevo.fecha,
+                categoria="Pérdida Cambiaria",
+                moneda="USD", 
+                tasa_cambio=1.0,
+                monto_ves=0.0
+            )
+            db.add(db_perdida)
+            
+        db.commit()
+        return {"mensaje": "¡Gasto operativo y diferencial cambiario registrados!"}
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/finanzas/registrar-venta")
 def registrar_venta(venta_nueva: schemas.ModeloVenta, db: Session = Depends(obtener_db)):
