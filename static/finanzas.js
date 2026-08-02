@@ -139,6 +139,20 @@ function filtrarFinanzas() {
         lblGanancia.className = `text-2xl font-black font-mono mt-1 ${porcentajeGanancia >= 0 ? 'text-yellow-600' : 'text-red-600'}`;
     }
 
+    // 👇 CÁLCULO DIRECTO DE LA PÉRDIDA CAMBIARIA 👇
+    let totalPerdida = categorias_gastos["Pérdida Cambiaria"] || 0;
+    let lblPerdida = document.getElementById('lbl_perdida_cambiaria');
+    if (lblPerdida) {
+        if (totalPerdida > 0) {
+            lblPerdida.innerText = "-$" + totalPerdida.toFixed(2);
+            lblPerdida.classList.add('text-red-600');
+        } else {
+            lblPerdida.innerText = "$0.00";
+            lblPerdida.classList.remove('text-red-600');
+        }
+    }
+    // 👆 FIN DEL CÁLCULO 👆
+
     document.getElementById('tabla-finanzas-body').innerHTML = htmlTabla;
 
     let ctx = document.getElementById('chartFinanzas');
