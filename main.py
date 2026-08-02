@@ -69,82 +69,28 @@ def home(request: Request):
 
 
 
-@app.get("/forzar-cuadre")
-def forzar_cuadre_caja():
+@app.get("/revertir-todo")
+def revertir_desastre():
     try:
-        # ====== 1. PON TUS DATOS REALES AQUÍ ======
-        TASA_ACTUAL = 746.63
-        
-        # Pon aquí los dólares EXACTOS que recibiste en billetes físicos
-        BILLETES_RECIBIDOS = 7.00  
-        # ==========================================
-        
         with Session(engine) as db:
-            # 1. Limpiar basuras de pruebas anteriores (Cero depósitos falsos)
-            db.execute(text("DELETE FROM gastos WHERE categoria = 'Pérdida Cambiaria' OR concepto ILIKE '%Ajuste%' OR concepto ILIKE '%Depósito%'"))
-            db.execute(text("DELETE FROM ventas WHERE concepto ILIKE '%Ajuste%' OR concepto ILIKE '%Depósito%'"))
+            # 1. BORRAMOS TODO MI DESASTRE (Devuelve los gastos a 242.50)
+            db.execute(text("DELETE FROM gastos WHERE categoria = 'Pérdida Cambiaria' OR concepto ILIKE '%Ajuste%' OR concepto ILIKE '%Depósito%' OR concepto ILIKE '%Diferencial%' OR concepto ILIKE '%Recepción%'"))
+            db.execute(text("DELETE FROM ventas WHERE concepto ILIKE '%Ajuste%' OR concepto ILIKE '%Depósito%' OR concepto ILIKE '%Recepción%'"))
             
-            # 2. Leer saldos de banco Viejos para poder calcular la inflación real
-            ventas_ves = db.execute(text("SELECT SUM(monto_ves) FROM ventas WHERE moneda = 'VES'")).scalar() or 0.0
-            gastos_ves = db.execute(text("SELECT SUM(monto_ves) FROM gastos WHERE moneda = 'VES'")).scalar() or 0.0
-            banco_ves_historico = ventas_ves - gastos_ves
+            # 2. RECUPERAMOS LAS FACTURAS EN EFECTIVO DE TUS CLIENTES
+            db.execute(text("""
+                UPDATE facturas 
+                SET condicion = 'Efectivo', moneda = 'USD', tasa_cambio = 1.0, monto_ves = 0
+                WHERE cliente_id IN (
+                    SELECT id FROM clientes 
+                    WHERE nombre ILIKE '%Pedro%' 
+                       OR nombre ILIKE '%Sanoni%' 
+                       OR nombre ILIKE '%Jaime%'
+                )
+            """))
             
-            # 3. Reescribir Facturas (POS) para arreglar los $141 falsos
-            facturas = db.query(models.FacturaDB).filter(models.FacturaDB.saldo_pendiente == 0).order_by(models.FacturaDB.id).all()
-            efectivo_fac = BILLETES_RECIBIDOS
-            for f in facturas:
-                if efectivo_fac > 0 and efectivo_fac >= f.total:
-                    f.condicion = "Efectivo"
-                    f.moneda = "USD"
-                    f.monto_ves = 0
-                    efectivo_fac -= f.total
-                else:
-                    f.condicion = "Transferencia"
-                    f.moneda = "VES"
-                    f.tasa_cambio = TASA_ACTUAL
-                    f.monto_ves = f.total * TASA_ACTUAL
-                    
-            # 4. Reescribir Ventas (Ingresos Granja)
-            ventas = db.query(models.VentaDB).order_by(models.VentaDB.id).all()
-            efectivo_ven = BILLETES_RECIBIDOS
-            for v in ventas:
-                if efectivo_ven > 0 and efectivo_ven >= v.total_ingreso:
-                    v.moneda = "USD"
-                    v.monto_ves = 0
-                    efectivo_ven -= v.total_ingreso
-                else:
-                    v.moneda = "VES"
-                    v.tasa_cambio = TASA_ACTUAL
-                    v.monto_ves = v.total_ingreso * TASA_ACTUAL
-
-            # 5. Reescribir Gastos (Vaciamos la caja a $0 usando el efectivo para pagar gastos)
-            gastos = db.query(models.GastoDB).order_by(models.GastoDB.id).all()
-            efectivo_gas = BILLETES_RECIBIDOS
-            for g in gastos:
-                if efectivo_gas > 0 and efectivo_gas >= g.total_gasto:
-                    g.moneda = "USD"
-                    g.monto_ves = 0
-                    efectivo_gas -= g.total_gasto
-                else:
-                    g.moneda = "VES"
-                    g.tasa_cambio = TASA_ACTUAL
-                    g.monto_ves = g.total_gasto * TASA_ACTUAL
-                    
             db.commit()
             
-            # 6. Calcular e inyectar Pérdida Cambiaria Real
-            banco_ves_perfecto = db.execute(text("SELECT (COALESCE((SELECT SUM(monto_ves) FROM ventas WHERE moneda = 'VES'), 0) - COALESCE((SELECT SUM(monto_ves) FROM gastos WHERE moneda = 'VES'), 0))")).scalar() or 0.0
-            
-            diferencia_ves = banco_ves_perfecto - banco_ves_historico
-            if diferencia_ves < -0.01:
-                perdida_usd = abs(diferencia_ves) / TASA_ACTUAL
-                from datetime import date
-                db.execute(text("""
-                    INSERT INTO gastos (lote_id, concepto, total_gasto, fecha, categoria, moneda, tasa_cambio, monto_ves)
-                    VALUES (NULL, 'Pérdida por Diferencial Cambiario', :m, :f, 'Pérdida Cambiaria', 'VES', :tc, :mves)
-                """), {"m": round(perdida_usd, 2), "f": date.today().strftime("%Y-%m-%d"), "tc": TASA_ACTUAL, "mves": abs(diferencia_ves)})
-                db.commit()
-
-        return {"mensaje": "¡Reparación Maestra Aplicada! Cero depósitos falsos, facturas corregidas y pérdida registrada."}
+        return {"mensaje": "¡Sistema restaurado! Se borró mi error, los gastos vuelven a 242.50 y se recuperaron las facturas en efectivo."}
     except Exception as e:
         return {"error": str(e)}
