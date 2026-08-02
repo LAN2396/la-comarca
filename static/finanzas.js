@@ -127,11 +127,20 @@ function filtrarFinanzas() {
         });
     }
 
-    let balance = ingresos - gastos;
-    let porcentajeGanancia = ingresos > 0 ? (balance / ingresos) * 100 : 0;
+    // 1. Aislamos la pérdida cambiaria
+    let totalPerdida = categorias_gastos["Pérdida Cambiaria"] || 0;
+    
+    // 2. Restamos la pérdida de los gastos para mostrar tu operatividad limpia
+    let gastosOperativos = gastos - totalPerdida;
+    
+    // 3. Recalculamos el balance y margen usando solo lo operativo
+    let balanceOperativo = ingresos - gastosOperativos;
+    let porcentajeGanancia = ingresos > 0 ? (balanceOperativo / ingresos) * 100 : 0;
     
     if (document.getElementById('dash_ingresos')) document.getElementById('dash_ingresos').innerText = formMoneda(ingresos);
-    if (document.getElementById('dash_egresos')) document.getElementById('dash_egresos').innerText = formMoneda(gastos);
+    
+    // 4. Mostramos el Gasto Limpio en la tarjeta grande (Ej: $242.50)
+    if (document.getElementById('dash_egresos')) document.getElementById('dash_egresos').innerText = formMoneda(gastosOperativos);
     
     let lblGanancia = document.getElementById('lbl_porcentaje_ganancia');
     if (lblGanancia) {
@@ -139,8 +148,7 @@ function filtrarFinanzas() {
         lblGanancia.className = `text-2xl font-black font-mono mt-1 ${porcentajeGanancia >= 0 ? 'text-yellow-600' : 'text-red-600'}`;
     }
 
-    // 👇 CÁLCULO DIRECTO DE LA PÉRDIDA CAMBIARIA 👇
-    let totalPerdida = categorias_gastos["Pérdida Cambiaria"] || 0;
+    // 5. Inyectamos la pérdida sola en la tarjetita pequeña
     let lblPerdida = document.getElementById('lbl_perdida_cambiaria');
     if (lblPerdida) {
         if (totalPerdida > 0) {
@@ -151,7 +159,6 @@ function filtrarFinanzas() {
             lblPerdida.classList.remove('text-red-600');
         }
     }
-    // 👆 FIN DEL CÁLCULO 👆
 
     document.getElementById('tabla-finanzas-body').innerHTML = htmlTabla;
 
