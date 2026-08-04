@@ -30,7 +30,7 @@ function verificarSesionActiva() {
         let tiempoActual = Date.now();
         let tiempoPasado = tiempoActual - parseInt(tiempoLogin);
         
-        if (tiempoPasado < 3600000) {
+        if (tiempoPasado < 259200000) { // <-- AQUÍ (72 Horas)
             usuarioActual = localStorage.getItem("usuarioGuardado");
             rolActual = localStorage.getItem("rolGuardado");
             let permisos = localStorage.getItem("permisosGuardados");
@@ -102,7 +102,7 @@ function aplicarPermisosVisuales(permisosStr, username) {
     if (username === 'luis armando' || permisosStr === 'TODOS') {
         botonesMenu.forEach(btn => btn.classList.remove('hidden'));
         document.getElementById('btn-panel-usuarios').classList.remove('hidden'); 
-        if(typeof cambiarPestana === 'function') cambiarPestana('panel-lotes');
+        if(typeof cambiarPestana === 'function') cambiarPestana('panel-facturacion');
         return;
     }
 

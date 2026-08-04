@@ -36,6 +36,13 @@ async function extraerTasaBCV() {
         }
     } catch (error) {
         lanzarFallbackBCV(display);
+    } finally {
+        // 🔥 MAGIA: Cuando Render responde (despierta), quitamos la pantalla de carga
+        let loader = document.getElementById('pantalla-carga-render');
+        if (loader) {
+            loader.classList.add('opacity-0');
+            setTimeout(() => loader.remove(), 500); // Se desvanece suavemente
+        }
     }
 }
 
@@ -84,3 +91,32 @@ async function mostrarRespuesta(objeto) {
     }
     if(typeof cargarHistorial === 'function') cargarHistorial(30); 
 }
+
+// =========================================
+// SOLUCIÓN: BUGS DEL MENÚ LATERAL (MÓVIL)
+// =========================================
+
+// 1. Cerrar menú al hacer clic afuera (en cualquier parte de la pantalla oscura)
+document.addEventListener('click', (event) => {
+    const sidebar = document.getElementById('sidebarMenu');
+    const botonMenu = document.querySelector('button[onclick="toggleMenu()"]');
+    
+    if (sidebar && botonMenu && window.innerWidth < 768) {
+        // Si el clic NO fue dentro del menú ni en el botón de abrirlo
+        if (!sidebar.contains(event.target) && !botonMenu.contains(event.target)) {
+            sidebar.classList.add('-translate-x-full');
+        }
+    }
+});
+
+// 2. Obligar al menú a cerrarse al tocar cualquier pestaña (incluso la seleccionada actualmente)
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.pestana-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebarMenu');
+            if (window.innerWidth < 768 && sidebar) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    });
+});
