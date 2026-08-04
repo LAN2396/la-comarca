@@ -35,6 +35,18 @@
     <meta name="theme-color" content="#8B0000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- 🧠 REGISTRO DEL SERVICE WORKER -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Fíjate que dice /sw.js, sin mencionar la carpeta static
+                navigator.serviceWorker.register('/sw.js').then(reg => {
+                    console.log('App Nativa Registrada con éxito');
+                }).catch(err => console.error('Error en Service Worker', err));
+            });
+        }
+    </script>
 </head>
 <body class="bg-gray-100 font-sans h-[100dvh] overflow-hidden flex fondo-comarca">
 

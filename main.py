@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.requests import Request
+from fastapi.responses import HTMLResponse, FileResponse
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
@@ -64,3 +65,7 @@ def render_seguro(request: Request, name: str, context: dict = None):
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return render_seguro(request, "index.html")
+
+@app.get("/sw.js")
+def serve_service_worker():
+    return FileResponse("static/sw.js", media_type="application/javascript")
